@@ -111,5 +111,5 @@ namespace Examples.SpreadProcessing
 - Edge case handling (empty spreads)
 
 ## Related Skills
-- [Working with Spreads](../skills/core/spreads.md)
-- [.NET Integration](../skills/coding/dotnet-integration.md)
+- [Working with Spreads](../../skills/core/spreads.md)
+- [.NET Integration](../../skills/coding/dotnet-integration.md)

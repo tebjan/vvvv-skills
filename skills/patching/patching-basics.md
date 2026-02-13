@@ -125,5 +125,4 @@ Output -> FrameDelay -> Input
 
 ## Related Skills
 - [Core Concepts](../core/fundamentals.md)
-- [Working with Spreads](spreads-operations.md)
-- [Animation Techniques](animation.md)
+- [Working with Spreads](../core/spreads.md)

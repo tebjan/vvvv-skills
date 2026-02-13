@@ -57,5 +57,5 @@ namespace Examples.Counter
 - State reset functionality
 
 ## Related Skills
-- [Custom Nodes](../skills/coding/custom-nodes.md)
-- [Patching Basics](../skills/patching/patching-basics.md)
+- [Custom Nodes](../../skills/coding/custom-nodes.md)
+- [Patching Basics](../../skills/patching/patching-basics.md)

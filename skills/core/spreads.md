@@ -172,6 +172,5 @@ var combined = spread1.Zip(spread2, (a, b) => new { A = a, B = b })
 - **Type mismatches**: Ensure spread element types are compatible
 
 ## Related Skills
-- [Core Concepts](../core/fundamentals.md)
-- [LINQ Operations](../coding/linq-usage.md)
-- [Iteration Patterns](iteration-patterns.md)
+- [Core Concepts](fundamentals.md)
+- [.NET Integration](../coding/dotnet-integration.md)
