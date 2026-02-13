@@ -1,0 +1,39 @@
+# Build and compilation outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# vvvv specific
+.vl/
+*.backup
+*.vl.lock
+
+# Dependencies
+packages/
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# IDE specific
+*.idea/
+*.iml

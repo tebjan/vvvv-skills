@@ -1,0 +1,138 @@
+{
+  "name": "vvvv-skills",
+  "version": "1.0.0",
+  "description": "AI agent skills for vvvv gamma visual programming language",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tebjan/vvvv-skills"
+  },
+  "keywords": [
+    "vvvv",
+    "vvvv-gamma",
+    "visual-programming",
+    "dotnet",
+    "ai-skills",
+    "ai-agent",
+    "copilot",
+    "claude",
+    "chatgpt",
+    "programming-skills"
+  ],
+  "license": "MIT",
+  "skills": {
+    "core": [
+      {
+        "name": "fundamentals",
+        "path": "skills/core/fundamentals.md",
+        "priority": "high",
+        "topics": ["visual-programming", "dataflow", "nodes", "pins", "spreads"],
+        "prerequisites": []
+      },
+      {
+        "name": "spreads",
+        "path": "skills/core/spreads.md",
+        "priority": "high",
+        "topics": ["collections", "data-structures", "spreads"],
+        "prerequisites": ["fundamentals"]
+      },
+      {
+        "name": "best-practices",
+        "path": "skills/core/best-practices.md",
+        "priority": "medium",
+        "topics": ["coding-standards", "conventions", "quality"],
+        "prerequisites": ["fundamentals"]
+      }
+    ],
+    "coding": [
+      {
+        "name": "custom-nodes",
+        "path": "skills/coding/custom-nodes.md",
+        "priority": "high",
+        "topics": ["csharp", "node-development", "custom-nodes"],
+        "prerequisites": ["fundamentals"]
+      },
+      {
+        "name": "dotnet-integration",
+        "path": "skills/coding/dotnet-integration.md",
+        "priority": "medium",
+        "topics": ["dotnet", "nuget", "libraries", "integration"],
+        "prerequisites": ["custom-nodes"]
+      }
+    ],
+    "patching": [
+      {
+        "name": "patching-basics",
+        "path": "skills/patching/patching-basics.md",
+        "priority": "high",
+        "topics": ["patching", "visual-programming", "nodes", "connections"],
+        "prerequisites": ["fundamentals"]
+      }
+    ]
+  },
+  "examples": [
+    {
+      "name": "simple-counter",
+      "path": "examples/simple-counter",
+      "topics": ["state-management", "basic-node"],
+      "relatedSkills": ["custom-nodes", "patching-basics"]
+    },
+    {
+      "name": "spread-processing",
+      "path": "examples/spread-processing",
+      "topics": ["spreads", "collections", "linq"],
+      "relatedSkills": ["spreads", "dotnet-integration"]
+    }
+  ],
+  "documentation": [
+    {
+      "name": "vvvv-overview",
+      "path": "docs/vvvv-overview.md",
+      "type": "guide",
+      "audience": "ai-agents"
+    },
+    {
+      "name": "troubleshooting",
+      "path": "docs/troubleshooting.md",
+      "type": "reference",
+      "audience": "all"
+    }
+  ],
+  "templates": [
+    {
+      "name": "custom-node-template",
+      "path": "templates/custom-node-template.md",
+      "type": "code-template",
+      "language": "csharp"
+    }
+  ],
+  "learningPaths": {
+    "beginner": [
+      "skills/core/fundamentals.md",
+      "docs/vvvv-overview.md",
+      "skills/patching/patching-basics.md",
+      "skills/core/spreads.md"
+    ],
+    "intermediate": [
+      "skills/coding/custom-nodes.md",
+      "examples/simple-counter",
+      "skills/coding/dotnet-integration.md",
+      "examples/spread-processing"
+    ],
+    "advanced": [
+      "skills/core/best-practices.md",
+      "docs/troubleshooting.md"
+    ]
+  },
+  "aiAgentGuidance": {
+    "primaryEntryPoint": "README.md",
+    "skillIndex": "skills/README.md",
+    "quickReference": {
+      "understand-vvvv": "docs/vvvv-overview.md",
+      "write-custom-node": "skills/coding/custom-nodes.md",
+      "create-patch": "skills/patching/patching-basics.md",
+      "work-with-collections": "skills/core/spreads.md",
+      "troubleshoot": "docs/troubleshooting.md"
+    },
+    "bestPracticesPath": "skills/core/best-practices.md"
+  }
+}
