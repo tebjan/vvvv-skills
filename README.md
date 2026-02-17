@@ -23,11 +23,11 @@ npx skills add tebjan/vvvv-skills
 Clone into your agent's skills directory:
 
 ```bash
-# Claude Code
-git clone https://github.com/tebjan/vvvv-skills ~/.claude/skills/vvvv-skills
+# Claude Code (Windows)
+git clone https://github.com/tebjan/vvvv-skills %USERPROFILE%\.claude\skills\vvvv-skills
 
-# OpenAI Codex CLI
-git clone https://github.com/tebjan/vvvv-skills ~/.codex/skills/vvvv-skills
+# Claude Code (Mac/Linux)
+git clone https://github.com/tebjan/vvvv-skills ~/.claude/skills/vvvv-skills
 ```
 
 Or add to a specific project's skills directory (e.g. `.claude/skills/` or equivalent).
