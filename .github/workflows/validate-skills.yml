@@ -1,0 +1,82 @@
+name: Validate Skills
+
+on:
+  push:
+    paths:
+      - 'skills/**'
+      - '.github/workflows/validate-skills.yml'
+  pull_request:
+    paths:
+      - 'skills/**'
+      - '.github/workflows/validate-skills.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate SKILL.md files
+        run: |
+          errors=0
+
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            skill_file="$skill_dir/SKILL.md"
+
+            # Check SKILL.md exists
+            if [ ! -f "$skill_file" ]; then
+              echo "::error::$skill_dir is missing SKILL.md"
+              errors=$((errors + 1))
+              continue
+            fi
+
+            # Extract frontmatter (between first two --- lines)
+            frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_file" | sed '1d;$d')
+
+            # Check required field: name
+            name=$(echo "$frontmatter" | sed -n 's/^name:[[:space:]]*//p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -z "$name" ]; then
+              echo "::error file=$skill_file::Missing required 'name' field in frontmatter"
+              errors=$((errors + 1))
+            elif [ "$name" != "$skill_name" ]; then
+              echo "::error file=$skill_file::name '$name' does not match directory name '$skill_name'"
+              errors=$((errors + 1))
+            elif ! echo "$name" | grep -qE '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'; then
+              echo "::error file=$skill_file::name '$name' must be lowercase alphanumeric with hyphens, no leading/trailing hyphens"
+              errors=$((errors + 1))
+            elif echo "$name" | grep -qE '\-\-'; then
+              echo "::error file=$skill_file::name '$name' must not contain consecutive hyphens"
+              errors=$((errors + 1))
+            elif [ ${#name} -gt 64 ]; then
+              echo "::error file=$skill_file::name '$name' exceeds 64 character limit"
+              errors=$((errors + 1))
+            fi
+
+            # Check required field: description
+            description=$(echo "$frontmatter" | sed -n 's/^description:[[:space:]]*//p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -z "$description" ]; then
+              echo "::error file=$skill_file::Missing required 'description' field in frontmatter"
+              errors=$((errors + 1))
+            elif [ ${#description} -gt 1024 ]; then
+              echo "::error file=$skill_file::description exceeds 1024 character limit"
+              errors=$((errors + 1))
+            fi
+
+            # Check SKILL.md body length (recommend < 500 lines)
+            total_lines=$(wc -l < "$skill_file")
+            if [ "$total_lines" -gt 500 ]; then
+              echo "::warning file=$skill_file::SKILL.md has $total_lines lines (recommended: under 500)"
+            fi
+
+            echo "✓ $skill_name"
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo ""
+            echo "::error::$errors validation error(s) found"
+            exit 1
+          fi
+
+          echo ""
+          echo "All skills validated successfully."

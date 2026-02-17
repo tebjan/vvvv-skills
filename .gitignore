@@ -1,0 +1,26 @@
+# vvvv gamma
+*.vl/
+*.backup
+_Backup/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+/voice_rec.txt
+
+# Private/internal
+/gathered-knowledge.md
+
+# Installed skills
+.agents/
