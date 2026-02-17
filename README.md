@@ -20,17 +20,19 @@ npx skills add tebjan/vvvv-skills
 
 ### Manual Installation
 
-Clone into your agent's skills directory:
+Clone the repo and copy the `skills/` contents into your agent's skills directory:
 
 ```bash
 # Claude Code (Windows)
-git clone https://github.com/tebjan/vvvv-skills %USERPROFILE%\.claude\skills\vvvv-skills
+git clone https://github.com/tebjan/vvvv-skills %TEMP%\vvvv-skills
+xcopy /E /I %TEMP%\vvvv-skills\skills\* %USERPROFILE%\.claude\skills\
 
 # Claude Code (Mac/Linux)
-git clone https://github.com/tebjan/vvvv-skills ~/.claude/skills/vvvv-skills
+git clone https://github.com/tebjan/vvvv-skills /tmp/vvvv-skills
+cp -r /tmp/vvvv-skills/skills/* ~/.claude/skills/
 ```
 
-Or add to a specific project's skills directory (e.g. `.claude/skills/` or equivalent).
+Each skill folder (e.g. `vvvv-fundamentals/`, `vvvv-shaders/`) must be placed directly inside `~/.claude/skills/` so that each `SKILL.md` is one level deep. You can also copy skills into a project-local `.claude/skills/` directory for per-project scope.
 
 ## Available Skills
 
@@ -49,6 +51,8 @@ Or add to a specific project's skills directory (e.g. `.claude/skills/` or equiv
 ## How It Works
 
 Once installed, skills activate automatically when the AI agent detects relevant context in your vvvv gamma project. The agent uses each skill's `description` field to decide when to load it — no manual invocation needed.
+
+In Claude Code, each installed skill also becomes available as a slash command (e.g. `/vvvv-shaders`, `/vvvv-custom-nodes`) for explicit activation.
 
 Example tasks the agent can help with:
 
@@ -103,7 +107,7 @@ See [Agent Skills Specification](https://agentskills.io/specification) for the f
 
 ### Skill Structure Reference
 
-```
+```text
 skills/your-skill/
 ├── SKILL.md           # Required — frontmatter + instructions
 ├── examples.md        # Optional — code examples (loaded on demand)
