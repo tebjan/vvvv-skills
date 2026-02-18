@@ -46,6 +46,7 @@ Each skill folder (e.g. `vvvv-fundamentals/`, `vvvv-shaders/`) must be placed di
 | `vvvv-shaders` | SDSL shaders — TextureFX, shader mixins, compute shaders, ShaderFX composition |
 | `vvvv-node-libraries` | Library project setup — AssemblyInitializer, service registration, ImportAsIs config, node factories |
 | `vvvv-channels` | Public channels — IChannelHub, [CanBePublished], hierarchical propagation, subscriptions, bang channels |
+| `vvvv-fileformat` | VL file format (.vl) — XML structure, element hierarchy, IDs, NodeReference/Choice patterns, programmatic generation |
 | `vvvv-troubleshooting` | Error diagnosis — C# node issues, shader compilation failures, runtime problems |
 
 ## How It Works
