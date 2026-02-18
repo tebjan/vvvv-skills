@@ -46,6 +46,7 @@ Each skill folder (e.g. `vvvv-fundamentals/`, `vvvv-shaders/`) must be placed di
 | `vvvv-shaders` | SDSL shaders — TextureFX, shader mixins, compute shaders, ShaderFX composition |
 | `vvvv-node-libraries` | Library project setup — AssemblyInitializer, service registration, ImportAsIs config, node factories |
 | `vvvv-channels` | Public channels — IChannelHub, [CanBePublished], hierarchical propagation, subscriptions, bang channels |
+| `vvvv-editor-extensions` | Editor plugins — .HDE.vl naming, Command nodes, SkiaWindow types, docking, Session API |
 | `vvvv-troubleshooting` | Error diagnosis — C# node issues, shader compilation failures, runtime problems |
 
 ## How It Works
@@ -78,6 +79,7 @@ No build step is needed for source project references — vvvv handles compilati
 
 1. Create a directory under `skills/` with a descriptive name (lowercase, hyphens)
 2. Add a `SKILL.md` with YAML frontmatter:
+
    ```yaml
    ---
    name: vvvv-your-topic
@@ -91,6 +93,7 @@ No build step is needed for source project references — vvvv handles compilati
 
    Your instructions here (under 500 lines).
    ```
+
 3. Add supporting files (`examples.md`, `reference.md`, `templates/`) as needed
 4. Reference supporting files from `SKILL.md` so the agent knows when to load them
 
