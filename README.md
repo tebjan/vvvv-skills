@@ -8,6 +8,8 @@ This repository contains **agent skills** — structured knowledge packages that
 
 Skills work with any compatible coding AI agent, including Claude Code, OpenAI Codex CLI, Cursor, Windsurf, GitHub Copilot, and [many others](https://skills.sh).
 
+**Discussion & feedback:** [Forum thread on vvvv.org](https://forum.vvvv.org/t/ai-agent-skills-for-vvvv-gamma/25010/3)
+
 vvvv gamma is a live programming environment for .NET — programs run continuously while you build them. C# source files are compiled by vvvv itself via Roslyn and take effect without restart. The ecosystem spans 3D/2D rendering, hardware control (DMX, lasers, depth cameras, robotics), networking (OSC, MQTT, WebSocket), computer vision, audio, and the full .NET NuGet package catalog.
 
 ## Installation
