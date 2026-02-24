@@ -1,13 +1,6 @@
 ---
 name: vvvv-fileformat
-description: >
-  Describes the .vl XML file format used by vvvv gamma — document structure,
-  element hierarchy, ID system (base62 GUIDs), NodeReference/Choice patterns,
-  Pins, Pads (IOBoxes), Links, ProcessDefinition/Fragment lifecycle, regions
-  (If/ForEach/Cache), type definitions, TypeAnnotations, and property
-  serialization. Use when generating, parsing, or modifying .vl files
-  programmatically, or when understanding the structure of vvvv patches at
-  the XML level.
+description: "Describes the .vl XML file format used by vvvv gamma — document structure, element hierarchy, ID system (base62 GUIDs), NodeReference/Choice patterns, Pins, Pads (IOBoxes), Links, ProcessDefinition/Fragment lifecycle, regions (If/ForEach/Cache), type definitions, TypeAnnotations, and property serialization. Use when generating, parsing, or modifying .vl files programmatically, or when understanding the structure of vvvv patches at the XML level."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
