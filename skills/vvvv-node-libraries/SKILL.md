@@ -5,7 +5,7 @@ license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Creating vvvv gamma Node Libraries
