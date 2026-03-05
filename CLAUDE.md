@@ -69,3 +69,17 @@ This repository follows the [Agent Skills Specification](https://agentskills.io/
 - Only add vvvv-specific knowledge — agents already know C#, .NET, LINQ
 - Reference supporting files from SKILL.md so agents know when to load them
 - Validate with [skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref): `skills-ref validate ./skills/your-skill`
+
+## Installing Skills
+
+Install all skills globally for multiple agents (Claude Code, Cursor, Cline, Codex, etc.):
+
+```bash
+npx skills add tebjan/vvvv-skills -y -g
+```
+
+Update existing skills to latest versions:
+
+```bash
+npx @anthropic/skills update
+```

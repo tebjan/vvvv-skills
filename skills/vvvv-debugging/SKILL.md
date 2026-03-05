@@ -5,7 +5,7 @@ license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Debugging vvvv gamma C# Projects
@@ -14,26 +14,17 @@ For CLI arguments and session files, see the **vvvv-startup** skill.
 
 ## Context-Aware Setup Workflow
 
-When the user asks to set up debugging, follow this workflow:
+When the user asks to set up debugging, follow this workflow. **Ask ALL configuration questions upfront** using AskUserQuestion before generating any files. Do NOT assume defaults — always confirm with the user.
 
 ### 1. Detect vvvv Installation
 
-Find vvvv.exe automatically:
+Find vvvv.exe automatically by scanning `C:\Program Files\vvvv\` for `vvvv_gamma_*` directories:
 
-```powershell
-# Check registry first
-Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\vvvv_gamma_*" |
-  ForEach-Object { $_.GetValue("InstallLocation") } |
-  Where-Object { Test-Path $_ }
-
-# Fallback: scan Program Files
-Get-ChildItem "C:\Program Files\vvvv\vvvv_gamma_*" -Directory |
-  Sort-Object Name -Descending | Select-Object -First 1
+```bash
+ls -d "/c/Program Files/vvvv/vvvv_gamma_"* 2>/dev/null | sort -r
 ```
 
-Pick the latest version. Directory name format: `vvvv_gamma_MAJOR.MINOR[-PREVIEW-HASH-PLATFORM]`. Filter out `-beta`, `-alpha`, `-rc`, `-test`, `-dev` variants. Sort by major DESC, minor DESC, preview number DESC.
-
-After detection, ask the user which vvvv to use, recommend the latest one, or ask for the path to vvvv.exe when non is found.
+Directory name format: `vvvv_gamma_MAJOR.MINOR[-BUILD-gHASH-PLATFORM]`. Sort by version descending. Filter out `-beta`, `-alpha`, `-rc`, `-test`, `-dev` variants unless no stable version exists.
 
 ### 2. Scan Workspace
 
@@ -42,40 +33,74 @@ Detect what exists in the workspace:
 - `.vl` files (candidates for `--open`)
 - `help/` folders (common location for test patches)
 - Existing `.vscode/launch.json` (extend rather than overwrite)
-- Package names from repo folder name, main *.vl file or `.csproj` `<PackageId>` or folder name (for `--editable-packages`)
+- Git submodules (especially `VL.StandardLibs` — see package repos warning below)
+- Package names from repo folder name, main *.vl file or `.csproj` `<PackageId>` (for `--editable-packages`)
 
-### 3. Determine C# Build Mode
+### 3. Ask User — ALL Questions Before Generating
 
-This is critical -- ask the user which setup they have:
+**CRITICAL: Ask all of these questions using AskUserQuestion BEFORE generating any configuration.** Use multi-question format to batch related questions. Do not generate launch.json until all answers are collected.
 
-**Source project reference (no build task needed):** The .vl document references the .csproj directly. vvvv compiles the C# files at runtime via Roslyn. Changes live-reload on save. This is the most common and convenient workflow for small to medium C# projects. In this case, **omit `preLaunchTask`** from launch.json -- vvvv handles compilation itself.
+#### Question Group 1: vvvv Version & Patch
+- **Which vvvv version?** — Present detected versions, recommend the latest stable. Let user pick or specify a custom path.
+- **Which .vl patch to open?** — List found `.vl` files as options. If `help/` folder exists, suggest those.
 
-**Binary/DLL reference (build task needed):** The .vl document references a pre-compiled DLL or NuGet package. The C# project must be built externally before launching vvvv. This is needed when:
-- The project has native dependencies (C++/CLI, P/Invoke)
-- Complex build scenarios (multi-project solutions, platform-specific targets)
-- Performance testing with Release builds
+#### Question Group 2: Launch Flags
+- **`--debug` flag?** — Enables debug symbols for breakpoints but slows patching. Ask: "Enable `--debug` for breakpoints? (slower startup)" Default: No for fast iteration, Yes if user explicitly wants breakpoints.
+- **`--allowmultiple`?** — Allows launching a second vvvv instance. Ask: "Allow multiple vvvv instances? If No, launch will fail if vvvv is already running (useful to detect stale instances)." Default: No.
+- **`--package-repositories`?** — Points vvvv to scan a folder for packages. **WARNING: If the workspace contains git submodules like `VL.StandardLibs/`, using `--package-repositories ${workspaceFolder}` will cause vvvv to recompile ALL core libraries from source, taking many minutes.** Ask: "Add `--package-repositories`? Only needed if vvvv can't find your package. WARNING: if your repo has VL.StandardLibs or other library submodules, this will trigger full recompilation." Default: No.
+- **`--editable-packages`?** — Loads specified packages from source. Only useful with `--package-repositories`. Ask only if package-repositories is enabled.
 
-In this case, **add `preLaunchTask: "build"`** and generate a tasks.json.
+#### Question Group 3: Build Mode
+- **Source reference or DLL?** — "Does your .vl document reference the .csproj directly (source reference, most common) or a pre-built DLL?" Source reference = no build task. DLL = add `preLaunchTask: "build"`.
 
-Note: Even with source project references, the agent may want to run `dotnet build` in the chat to detect build errors quickly, but this is separate from the F5 launch workflow.
+### 4. Generate Configuration
 
-### 4. Ask User
+Only after all questions are answered, generate `.vscode/launch.json` and optionally `.vscode/tasks.json`.
 
-Ask the user:
-- Which `.vl` patch(es) to open on launch (suggest help patches if found)
-- Whether they need multiple launch configs for different test scenarios
-- Any additional package repositories needed
-- Whether their .vl document references the .csproj directly (source reference) or uses a pre-built DLL
+**Always generate these configurations:**
+1. A launch config with the user's chosen flags
+2. An "Attach to vvvv" config for attaching to an already-running instance
 
-### 5. Generate Configuration
-
-Generate `.vscode/launch.json` and optionally `.vscode/tasks.json` (only if build task is needed).
+**Optionally generate:**
+- A second launch config with `--debug` if the first one doesn't have it (or vice versa)
+- A `tasks.json` if DLL/binary build mode was selected
 
 ## VS Code launch.json
 
-### Source Reference (vvvv compiles C# -- most common)
+### Minimal Config (source reference, no extras)
 
-No build task needed. vvvv compiles the .csproj at runtime:
+The simplest possible config — just open a patch:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "vvvv — MyPatch",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "C:\\Program Files\\vvvv\\vvvv_gamma_7.1-win-x64\\vvvv.exe",
+      "args": [
+        "-o",
+        "${workspaceFolder}/help/HowTo Use MyFeature.vl"
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "Attach to vvvv",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "vvvv.exe"
+    }
+  ]
+}
+```
+
+### Full Config (with all optional flags)
+
+When the user opts in to all flags:
 
 ```json
 {
@@ -99,6 +124,12 @@ No build task needed. vvvv compiles the .csproj at runtime:
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
       "console": "internalConsole"
+    },
+    {
+      "name": "Attach to vvvv",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "vvvv.exe"
     }
   ]
 }
@@ -116,14 +147,9 @@ Add `preLaunchTask` to build C# before launching vvvv:
   "preLaunchTask": "build",
   "program": "C:\\Program Files\\vvvv\\vvvv_gamma_7.0-win-x64\\vvvv.exe",
   "args": [
-    "--package-repositories",
-    "${workspaceFolder}",
-    "--editable-packages",
-    "VL.MyPackage*",
     "-o",
     "${workspaceFolder}/help/HowTo Use MyFeature.vl",
-    "--debug",
-    "--allowmultiple"
+    "--debug"
   ],
   "cwd": "${workspaceFolder}",
   "stopAtEntry": false,
@@ -134,56 +160,12 @@ Add `preLaunchTask` to build C# before launching vvvv:
 Key points:
 - **Omit `preLaunchTask`** for source references -- vvvv handles C# compilation via Roslyn
 - **Add `preLaunchTask: "build"`** only for DLL/binary references or complex build scenarios
-- `--debug` enables debug symbols (needed for breakpoints, but slows down patching -- see below)
-- `--package-repositories` tells vvvv where to find your package (parent folder)
+- `--debug` enables debug symbols (needed for breakpoints, but slows down patching)
+- `--package-repositories` tells vvvv where to find your package — **WARNING: will recompile any VL library submodules found in the scanned folder tree**
 - `--editable-packages` loads specified packages from source (glob patterns supported)
 - `-o` opens the specified .vl patch on startup
+- `--allowmultiple` allows a second vvvv instance — omit to detect stale instances
 - Use array items for args (not a single string) for readability
-
-### Always Generate Multiple Configurations
-
-Always create at least a **Debug** and a **Release/Performance** configuration so the user can choose based on their current goal. Add additional configs for different test patches as needed:
-
-```json
-{
-  "configurations": [
-    {
-      "name": "Debug with vvvv",
-      "type": "coreclr",
-      "request": "launch",
-      "program": "C:\\Program Files\\vvvv\\vvvv_gamma_7.0-win-x64\\vvvv.exe",
-      "args": [
-        "--package-repositories", "${workspaceFolder}",
-        "--editable-packages", "VL.MyPackage*",
-        "-o", "${workspaceFolder}/help/HowTo Basic Feature.vl",
-        "--debug", "--allowmultiple"
-      ],
-      "cwd": "${workspaceFolder}",
-      "console": "internalConsole"
-    },
-    {
-      "name": "Release / Performance Test",
-      "type": "coreclr",
-      "request": "launch",
-      "program": "C:\\Program Files\\vvvv\\vvvv_gamma_7.0-win-x64\\vvvv.exe",
-      "args": [
-        "--package-repositories", "${workspaceFolder}",
-        "--editable-packages", "VL.MyPackage*",
-        "-o", "${workspaceFolder}/help/HowTo Basic Feature.vl",
-        "--allowmultiple"
-      ],
-      "cwd": "${workspaceFolder}",
-      "console": "internalConsole"
-    },
-    {
-      "name": "Attach to vvvv",
-      "type": "coreclr",
-      "request": "attach",
-      "processName": "vvvv.exe"
-    }
-  ]
-}
-```
 
 ### Attach to Running vvvv
 
@@ -257,7 +239,7 @@ Prefer `dotnet build` unless the project requires MSBuild-specific features or a
 2. **Debug** > **Debug Properties** (or Project Properties > Debug > General)
 3. Create a new launch profile:
    - **Command**: path to `vvvv.exe`
-   - **Command line arguments**: `--allowmultiple -o YourPatch.vl` (add `--debug` when breakpoints are needed)
+   - **Command line arguments**: `-o YourPatch.vl` (add `--debug` when breakpoints are needed)
    - **Working directory**: project folder
 4. Press F5 to launch with debugger attached
 
@@ -277,7 +259,7 @@ Prefer `dotnet build` unless the project requires MSBuild-specific features or a
     "Debug vvvv": {
       "commandName": "Executable",
       "executablePath": "C:\\Program Files\\vvvv\\vvvv_gamma_6.8-win-x64\\vvvv.exe",
-      "commandLineArgs": "--allowmultiple --editable-packages \"VL.MyLib*\"",
+      "commandLineArgs": "-o YourPatch.vl",
       "workingDirectory": "$(ProjectDir)"
     }
   }
@@ -294,3 +276,9 @@ Prefer `dotnet build` unless the project requires MSBuild-specific features or a
 - **Constructor breakpoints** -- fire on each live-reload cycle too (Dispose then new Constructor)
 - **`console: "internalConsole"`** -- captures Console.WriteLine output in VS Code debug console
 - **Debugger-attached behavior** -- when a .NET debugger is attached, vvvv initialization runs synchronously (no async exception trapping), so startup breakpoints work reliably
+
+## Common Pitfalls
+
+- **`--package-repositories` + VL.StandardLibs submodule** — If your workspace has a `VL.StandardLibs/` git submodule (common in vvvv contrib repos), `--package-repositories ${workspaceFolder}` will cause vvvv to discover and recompile ALL standard libraries from source. This takes many minutes and is almost never what you want. Either omit `--package-repositories` or point it at a specific subfolder that doesn't contain library submodules.
+- **`--allowmultiple` hiding stale instances** — Without this flag, vvvv refuses to start if another instance is running. This is useful: it tells you there's a stale vvvv process. With `--allowmultiple`, you might accidentally run two instances consuming double resources.
+- **`--debug` slowing everything** — Debug symbol emission significantly slows vvvv's live compilation. Only enable when you actually need breakpoints. For quick iteration (testing UI, checking behavior), omit it.
