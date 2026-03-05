@@ -51,6 +51,9 @@ Each skill folder (e.g. `vvvv-fundamentals/`, `vvvv-shaders/`) must be placed di
 | `vvvv-editor-extensions` | Editor plugins — .HDE.vl naming, Command nodes, SkiaWindow types, docking, Session API |
 | `vvvv-fileformat` | VL file format (.vl) — XML structure, element hierarchy, IDs, NodeReference/Choice patterns, programmatic generation |
 | `vvvv-troubleshooting` | Error diagnosis — C# node issues, shader compilation failures, runtime problems |
+| `vvvv-startup` | Launching vvvv gamma — CLI arguments, package repositories, filesystem paths, installation detection |
+| `vvvv-debugging` | Debugger setup — VS Code launch.json generation, attach to process, Visual Studio profiles, multiple test scenarios |
+| `vvvv-testing` | Automated testing — VL.TestFramework with NUnit, test patches with assertion nodes, agent-driven test workflows, CI integration |
 
 ## How It Works
 
