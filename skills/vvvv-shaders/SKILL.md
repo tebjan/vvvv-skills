@@ -1,6 +1,6 @@
 ---
 name: vvvv-shaders
-description: Helps write SDSL shaders for Stride and vvvv gamma — TextureFX, shader mixins, compute shaders, and ShaderFX composition. Use when writing or debugging .sdsl shader files, creating visual effects, working with the Stride rendering pipeline, or composing shader mixins.
+description: "Helps write SDSL shaders for Stride and vvvv gamma — TextureFX, shader mixins, compute shaders, and ShaderFX composition. SDSL is a superset of HLSL, so use this skill when writing or debugging .sdsl shader files, GPU shaders, visual effects, HLSL code for vvvv, working with the Stride rendering pipeline, composing shader mixins, or any GPU/compute work. Trigger even if the user says 'HLSL', 'shader', 'GPU effect', 'render pass', or 'compute' in a vvvv context."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:

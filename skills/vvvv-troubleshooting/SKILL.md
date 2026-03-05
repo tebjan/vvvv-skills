@@ -108,7 +108,7 @@ public void Update(out float result, float input = 0f)
 
 ## SDSL Shader Issues
 
-For SDSL syntax rules, common mistakes, and correct/wrong examples, see [vvvv-shaders/syntax-rules.md](../vvvv-shaders/syntax-rules.md). Key issues: `static const` scope, missing semicolons, missing `override`, enum binding format.
+For SDSL syntax rules, common mistakes, and correct/wrong examples, consult the **vvvv-shaders** skill and its `syntax-rules.md`. Key issues: `static const` scope, missing semicolons, missing `override`, enum binding format.
 
 ## Runtime Issues
 

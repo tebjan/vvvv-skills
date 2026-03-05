@@ -1,6 +1,6 @@
 ---
 name: vvvv-node-libraries
-description: Helps set up C# library projects that provide nodes to vvvv gamma — project directory structure, Initialization.cs with AssemblyInitializer, service registration via RegisterService, IResourceProvider factories, ImportAsIs namespace/category configuration, .csproj setup, and dynamic node factories via RegisterNodeFactory. Use when creating a new library project, registering services or node factories, configuring ImportAsIs parameters, or setting up .csproj.
+description: "Helps set up C# library projects that provide nodes to vvvv gamma — project directory structure, Initialization.cs with AssemblyInitializer, service registration via RegisterService, IResourceProvider factories, ImportAsIs namespace/category configuration, .csproj setup, and dynamic node factories via RegisterNodeFactory. Use when creating a new vvvv library, VL package, NuGet package for vvvv, registering services or node factories, configuring ImportAsIs parameters, or setting up the project structure. Trigger when the user says 'create a package', 'make a library', 'distribute nodes', or 'publish a VL package'."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:

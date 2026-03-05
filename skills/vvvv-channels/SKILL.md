@@ -1,6 +1,6 @@
 ---
 name: vvvv-channels
-description: Helps work with vvvv gamma's Channel system from C# — IChannelHub, public channels, [CanBePublished] attributes, hierarchical data propagation, channel subscriptions, bang channels, and spread sub-channels. Use when reading or writing public channels from C# nodes, publishing .NET types as channels, working with IChannelHub, subscribing to channel changes, or managing hierarchical channel state.
+description: "Helps work with vvvv gamma's Channel system from C# — IChannelHub, public channels, [CanBePublished] attributes, hierarchical data propagation, channel subscriptions, bang channels, and spread sub-channels. Use when reading or writing public channels from C# nodes, publishing .NET types as channels, working with IChannelHub, subscribing to channel changes, managing hierarchical channel state, or implementing reactive/observable data flow. Trigger for any mention of IChannel, IChannelHub, reactive binding, observable state, two-way data binding, or TryGetChannel in a vvvv context."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:

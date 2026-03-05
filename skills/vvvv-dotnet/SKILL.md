@@ -1,6 +1,6 @@
 ---
 name: vvvv-dotnet
-description: Helps with .NET integration in vvvv gamma — NuGet packages, library references, .csproj project configuration, vector type interop, and async patterns. Use when adding NuGet packages, configuring build settings, referencing external .NET libraries, or working with System.Numerics/Stride type conversions.
+description: "Helps with .NET integration in vvvv gamma — NuGet packages, library references, .csproj project configuration, the [assembly: ImportAsIs] attribute, vector type interop, and async patterns. Use when adding NuGet packages, configuring build settings, referencing external .NET libraries, setting up the ImportAsIs assembly attribute, working with System.Numerics/Stride type conversions, or when nodes aren't appearing in the node browser due to missing assembly configuration."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
