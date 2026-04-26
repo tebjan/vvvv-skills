@@ -1,18 +1,36 @@
 ---
 name: vvvv-custom-nodes
-description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, or creating stateless utility methods. Requires [assembly: ImportAsIs]."
+description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] lifecycle pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, the public-API import model, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, creating stateless utility methods, or deciding whether a class needs [ProcessNode] at all. Requires the assembly to have one of [assembly: ImportAsIs] / [assembly: ImportNamespace] / [assembly: ImportType] set (see vvvv-node-libraries)."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Writing Custom Nodes for vvvv gamma
 
+## What `[ProcessNode]` actually does (and what it does NOT do)
+
+**Important reality check.** vvvv imports every `public` class, struct, enum, method, and property from the assembly's configured namespaces — `[ProcessNode]` does NOT control whether a class becomes a node. A plain `public class Foo { public int Bar(int x) => x; }` will appear in the node browser exactly the same way as one decorated with `[ProcessNode]`. The attribute affects *how* the runtime treats the class, not *whether* it gets imported.
+
+What `[ProcessNode]` DOES:
+
+- Tells vvvv "this is a stateful node — keep ONE instance alive per node in the patch and call its `Update()` method each frame".
+- Lets you set `Name = "..."` (rename for the node browser), `Category = "..."` (override the assembly's category), and `HasStateOutput = true` (expose the instance as an output pin).
+- Engages live reload, `IDisposable` cleanup, and the `NodeContext` constructor injection.
+
+What `[ProcessNode]` does NOT do:
+
+- It does NOT make a class visible to vvvv. Visibility comes from the C# `public` access modifier plus an `[assembly: ImportAsIs/ImportNamespace/ImportType]` attribute. See vvvv-node-libraries for the import rules.
+- It does NOT hide internal helpers. If a helper is `public`, it's a node — period. Use `internal` to hide.
+- It does NOT change pin generation. Pin generation is driven by the `Update()` method signature for `[ProcessNode]` classes, and by public method/property signatures for non-`[ProcessNode]` classes.
+
+**When to use `[ProcessNode]`:** the class needs frame-by-frame updates, persistent state between frames, or `IDisposable` cleanup. **When to skip `[ProcessNode]`:** stateless utility classes, value types, static helper methods — leaving the attribute off avoids the per-frame `Update()` ceremony, and the public methods become operation nodes automatically.
+
 ## ProcessNode Pattern — The Core Pattern
 
-Every stateful C# node in vvvv gamma uses `[ProcessNode]`:
+The canonical stateful C# node in vvvv gamma:
 
 ```csharp
 [ProcessNode]
@@ -45,7 +63,7 @@ public class MyTransform : IDisposable
 }
 ```
 
-**Prerequisite**: `[ProcessNode]` only works if `[assembly: ImportAsIs]` is set on the assembly. Projects created by vvvv include this automatically. For library-level `ImportAsIs` with Namespace/Category parameters, see vvvv-node-libraries.
+**Prerequisite**: vvvv only sees a `[ProcessNode]` class (or any other public class) if its namespace is covered by an assembly-level import attribute — `[assembly: ImportAsIs]`, `[assembly: ImportNamespace]`, or `[assembly: ImportType]` for that specific class. Without one of those, the assembly's public API is invisible to the node browser entirely. Projects scaffolded by vvvv include `[assembly: ImportAsIs]` automatically. For multi-namespace libraries or hand-picked node lists, see vvvv-node-libraries — `ImportAsIs` is `AllowMultiple = false`, so you'll reach for `ImportNamespace` (multi-use) or `ImportType` (per-type) when one root attribute isn't enough.
 
 ### Non-Negotiable Rules
 
