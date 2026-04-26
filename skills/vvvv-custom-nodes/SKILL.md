@@ -5,7 +5,7 @@ license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Writing Custom Nodes for vvvv gamma
@@ -165,6 +165,58 @@ public void Update(
     bool clear = true)
 { }
 ```
+
+## Attributes — when you actually need them
+
+Verified against `VL.StandardLibs/VL.Core/src/Import/` source. Most attribute properties have sensible defaults — set them only when you want to override the default. Setting an attribute property to its default value is just visual noise.
+
+### `[ProcessNode]` — class-level (`AllowMultiple = false`)
+
+| Property | Default | Set it when… |
+|---|---|---|
+| `Name` | C# class name | …the node's user-facing name should differ from the class name. If `Name` would equal the class name, omit it. |
+| `Category` | from assembly-level import attribute | …you want this specific class to land in a different category than the rest of the assembly. |
+| `HasStateOutput` | `false` | …downstream nodes need access to the node instance itself (e.g. to call methods on it). |
+| `FragmentSelection` | `Implicit` (all public members become fragments) | …you want only members marked `[Fragment]` to be exposed. |
+| `StateOutputNotVisibleByDefault` | `false` | …you have a state output but want it hidden until the user enables it. |
+| `Summary`, `Remarks`, `Tags` | `null` | These are alternatives to XML doc comments; prefer the comments unless you need programmatic access. |
+
+So `[ProcessNode]` (bare) is the right default for the common case where the class name = node name and category falls out of the assembly attribute. Adding `[ProcessNode(Name = "Foo", Category = "Bar")]` is only useful when those values diverge from what the defaults would produce.
+
+### `[Pin]` — parameter / property / return-value (`AllowMultiple = false`)
+
+| Property | Default | Set it when… |
+|---|---|---|
+| `Name` | the parameter name (vvvv applies title-casing automatically) | …you need a name vvvv can't derive — e.g. spaces, punctuation, or a name unrelated to the parameter. **`[Pin(Name = "input")]` on a parameter `input` is redundant** — vvvv already shows it as `Input`. |
+| `Visibility` | `PinVisibility.Visible` | …you want the pin `Optional` (collapsible) or `Hidden` (inspector-only). |
+| `Exposition` | `PinExpositionMode.Local` | …you want the pin auto-exposed on parent patches (`InfectPatch` / `Expose`). |
+| `PinGroupKind` | `PinGroupKind.None` | …the parameter is a `Spread<T>` that should appear as an add/remove pin group. |
+| `PinGroupDefaultCount` | `0` | …a pin group should start with N entries. |
+| `PinGroupEditMode` | `None` | …you want to limit add/remove to one direction only. |
+
+**The return value attribute** (`[return: Pin(...)]`) is only needed when the auto-derived return-value pin needs an override — e.g. a custom name. The default name is fine for nearly all `Update` methods that only have `out` parameters.
+
+### `[DefaultValue]` — parameter (from `System.ComponentModel`)
+
+NOT a vvvv attribute. Set it only for value types where the literal **isn't** expressible as a C# default — `Color4`, `Vector3`, `Int2`, etc. For `int`, `float`, `bool`, `string`, prefer the C# parameter default (`int x = 5`).
+
+⚠️ **Never combine `[DefaultValue(...)]` with `= default`** on the same parameter — the C# `default` wins and your typed default becomes black/zero/null. See the dedicated section above.
+
+### `[Fragment]` — member-level (`AllowMultiple = false`)
+
+Only relevant when `[ProcessNode(FragmentSelection = FragmentSelection.Explicit)]` is set on the class. With the default `Implicit` selection, `[Fragment]` is unnecessary noise.
+
+| Property | Default | Set it when… |
+|---|---|---|
+| `Order` | `0` (declaration order) | …you need a specific fragment order independent of source layout. |
+| `IsHidden` | `false` | …a member should NOT become a fragment despite being public. |
+| `IsDefault` | `false` | …this fragment should run at the default moment when nothing else is wired. |
+
+### Rule of thumb
+
+1. If the attribute has only default values, **don't write the attribute**.
+2. If you only need ONE non-default property, write only that one (e.g. `[Pin(Visibility = PinVisibility.Optional)]`).
+3. The presence of an attribute should always communicate "I'm overriding a default", never "I'm restating the default".
 
 ## Constructor Patterns
 

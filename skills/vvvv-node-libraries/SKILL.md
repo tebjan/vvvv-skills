@@ -5,7 +5,7 @@ license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Creating vvvv gamma Node Libraries
@@ -201,17 +201,45 @@ There is no `ExcludeFromImport` / `IgnoreType` / `[Hidden]` attribute in VL — 
 
 **Decision shortcut:** If you ever say "this class is `public` only because tests in another assembly need it, but I don't want users to see it as a node" — the answer is namespace partitioning + selective import, not `internal` + `[InternalsVisibleTo]`.
 
-## Category resolution rules
+⚠️ **Watch out: `StartsWith` prefix matching, no boundary check.** Both `ImportAsIs.IsMatch` and `ImportNamespace.IsMatch` check `ns.StartsWith(Namespace)` — so `Namespace = "VL.Foo"` will match a class in `VL.FooBar` (not just `VL.Foo.X`). Pick prefix names that won't false-match nearby namespaces.
 
-For any class that vvvv decides to import, the final node-browser category is resolved in this priority order:
+## Category resolution rules — verified from vvvv source
 
-1. **`[ProcessNode(Category = "X")]`** on the class itself — wins over assembly-level config.
-2. **`[assembly: ImportType(typeof(T), Category = "X")]`** for the specific type — overrides namespace-level category.
-3. **`[assembly: ImportNamespace("VL.MyLib.Sub", Category = "X")]`** matching the class's namespace — wins by longest prefix.
-4. **`[assembly: ImportAsIs(Namespace = "VL.MyLib", Category = "X")]`** — applies to all types under `VL.MyLib` not covered above. Sub-namespaces extend the category (e.g. class in `VL.MyLib.Particles` lands at `X.Particles`).
-5. **No category attribute** — the C# namespace structure is used directly as the category path.
+Priority order (highest first):
 
-When debugging "why did my node end up in `MyLib.Internal`?", walk the priority list top-down — almost always the answer is "no explicit category was set and the C# namespace bled into the browser".
+1. **`[ProcessNode(Category = "X")]`** on the class itself — wins.
+2. **`[assembly: ImportType(typeof(T), Category = "X", NamespacePrefixToStrip = "...")]`** — per-type override.
+3. **`[assembly: ImportNamespace("X.Sub", Category = "Y")]`** matching the class's namespace — wins by longest prefix.
+4. **`[assembly: ImportAsIs(Namespace = "X", Category = "Y")]`** — applies to types under `X` not covered above.
+
+For levels 3 and 4 (`ImportAsIs` / `ImportNamespace`), the resulting category is computed by **`GetCategory(typeNamespace)`** in [VL.Core/src/Import/ImportAsIsAttribute.cs](https://github.com/vvvv/VL.StandardLibs/blob/main/VL.Core/src/Import/ImportAsIsAttribute.cs):
+
+```csharp
+// Pseudocode of the actual VL.Core implementation:
+root = Category ?? "";
+if (typeNamespace == "")           return root;
+if (Namespace == "")               cat = typeNamespace;
+else if (typeNamespace.Length > Namespace.Length)
+                                   cat = typeNamespace.Substring(Namespace.Length + 1);
+else /* typeNamespace == Namespace */ cat = "";
+if (cat == "")                     return root;
+if (root == "")                    return cat;
+return $"{root}.{cat}";
+```
+
+What this means in practice — the **non-obvious** consequence:
+
+| `[assembly: ImportAsIs(...)]` | C# namespace | vvvv category | Surprise? |
+|---|---|---|---|
+| `Namespace = "VL.MyLib", Category = "MyLib"` | `VL.MyLib` | `MyLib` | no |
+| `Namespace = "VL.MyLib", Category = "MyLib"` | `VL.MyLib.Particles` | `MyLib.Particles` | no |
+| `Namespace = "VL.MyLib"` *(no Category)* | `VL.MyLib` | `""` (root) | yes — empty/root |
+| `Namespace = "VL.MyLib"` *(no Category)* | `VL.MyLib.Particles` | `Particles` | **yes — top-level** |
+| `Namespace = "VL.MyLib"` *(no Category)* | `VL.MyLib.Internal.Helpers` | `Internal.Helpers` | **yes — top-level "Internal" leak!** |
+
+**Without `Category=`, the prefix is just stripped — there is no fallback that prepends the last segment of `Namespace`.** So `[ImportAsIs(Namespace = "VL.MyLib")]` with classes in `VL.MyLib.Config` puts them at top-level `Config`, NOT `MyLib.Config`. This is the most common surprise — always set `Category` explicitly unless you really want top-level pollution from sub-namespaces.
+
+When debugging "why did my node end up at top-level `Helpers` instead of `MyLib.Helpers`?", check: did you forget the `Category =` parameter on `ImportAsIs`?
 
 ## Service Registration Patterns
 
