@@ -1,11 +1,11 @@
 ---
 name: vvvv-node-libraries
-description: "Helps set up C# library projects that provide nodes to vvvv gamma — project directory structure, Initialization.cs with AssemblyInitializer, service registration via RegisterService, IResourceProvider factories, ImportAsIs / ImportNamespace / ImportType selection, category organization, .csproj setup, and dynamic node factories via RegisterNodeFactory. Use when creating a new vvvv library, VL package, NuGet package for vvvv, deciding which import attribute to use, organizing categories, controlling which public types become nodes, registering services or node factories, or setting up the project structure. Trigger when the user says 'create a package', 'make a library', 'distribute nodes', 'organize categories', 'hide internal helpers from the node browser', or 'publish a VL package'."
+description: "Helps set up C# library projects that provide nodes to vvvv gamma — project directory structure, Initialization.cs with AssemblyInitializer, service registration via RegisterService, IResourceProvider factories, ImportAsIs / ImportNamespace / ImportType selection, category organization, .csproj setup, and dynamic node factories via RegisterNodeFactory. Also covers contributing changes to an existing/upstream vvvv library — fork → branch → PR workflow, editable source packages (--package-repositories / --editable-packages), and the .vl-document diff problem. Use when creating a new vvvv library, VL package, NuGet package for vvvv, deciding which import attribute to use, organizing categories, controlling which public types become nodes, registering services or node factories, setting up the project structure, or contributing a fix/feature/PR to a library you don't own (e.g. VL.StandardLibs). Trigger when the user says 'create a package', 'make a library', 'distribute nodes', 'organize categories', 'hide internal helpers from the node browser', 'publish a VL package', 'contribute to vvvv', 'file a PR on a vvvv library', or 'edit an existing library'."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.3"
+  version: "1.4"
 ---
 
 # Creating vvvv gamma Node Libraries
@@ -13,6 +13,8 @@ metadata:
 A node library is a project that provides multiple nodes to vvvv gamma as a distributable package. This skill covers the project-level concerns: directory structure, naming conventions, category organization, service registration, and node factories.
 
 For writing individual node classes (ProcessNode, Update, pins, change detection), see vvvv-custom-nodes. For consuming services inside node constructors (IFrameClock, Game, logging), see vvvv-custom-nodes/services.md.
+
+**Creating your own library vs. contributing to one you don't own** are different tasks. This SKILL.md and its design/publishing references cover *creating and distributing* a package. To change or submit a PR to an **existing/upstream** library (fork → branch → PR workflow, editable source packages, the `.vl` diff problem), see [contributing.md](contributing.md).
 
 ## Library Recognition Pattern
 
@@ -354,4 +356,5 @@ public sealed class Initialization : AssemblyInitializer<Initialization>
 
 For naming conventions, pin rules, aspects, and standard types, see [design-guidelines.md](design-guidelines.md).
 For publishing NuGets, help patches, and library structure, see [publishing.md](publishing.md).
+For contributing changes/PRs to an existing upstream library, see [contributing.md](contributing.md).
 For complete real-world examples (VL.IO.MQTT, VL.Audio), see [examples.md](examples.md).
