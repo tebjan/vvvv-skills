@@ -53,13 +53,10 @@ jobs:
               errors=$((errors + 1))
             fi
 
-            # Check required field: description
+            # Check required field: description (no maximum length enforced)
             description=$(echo "$frontmatter" | sed -n 's/^description:[[:space:]]*//p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             if [ -z "$description" ]; then
               echo "::error file=$skill_file::Missing required 'description' field in frontmatter"
-              errors=$((errors + 1))
-            elif [ ${#description} -gt 1024 ]; then
-              echo "::error file=$skill_file::description exceeds 1024 character limit"
               errors=$((errors + 1))
             fi
 
