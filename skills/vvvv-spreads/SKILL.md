@@ -1,6 +1,6 @@
 ---
 name: vvvv-spreads
-description: "Helps write code using vvvv gamma's Spread<T> immutable collection type and SpreadBuilder<T>. Use when working with Spreads, SpreadBuilder, collections, arrays, iteration, mapping, filtering, zipping, accumulating, or converting between Span and Spread. Trigger whenever the user writes collection-processing C# code in vvvv — even if they say 'list', 'array', or 'IEnumerable' instead of Spread, this skill likely applies."
+description: "Helps write code using vvvv gamma's Spread(T) immutable collection type and SpreadBuilder(T). Use when working with Spreads, SpreadBuilder, collections, arrays, iteration, mapping, filtering, zipping, accumulating, or converting between Span and Spread. Trigger whenever the user writes collection-processing C# code in vvvv — even if they say 'list', 'array', or 'IEnumerable' instead of Spread, this skill likely applies."
 license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
