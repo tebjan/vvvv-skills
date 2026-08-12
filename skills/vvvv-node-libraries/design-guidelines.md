@@ -43,22 +43,28 @@ Avoid `As..` prefixes — use `To..` or `From..` instead.
 
 Keywords that control node visibility and behavior:
 
+Keywords recognised by `Symbols.ToSmell` (case-sensitive), mapping to `VL.Core.SymbolSmell`:
+
 | Keyword | Purpose |
 |---|---|
 | `Advanced` | Hidden by default in NodeBrowser (show via filter) |
-| `Internal` | Visible only in the defining `.vl` document |
+| `Hidden` | Never offered in the NodeBrowser at all |
+| `Internal` | Visible only in the defining `.vl` document / library |
 | `Experimental` | Marks unstable/WIP nodes |
 | `Obsolete` | Deprecated; kept for backwards compatibility |
 | `Adaptive` | Enrolls nodes in adaptive type dispatch |
 
 ### Applying Aspects
 
-Three methods:
-1. **Group-level**: Use keyword as a category name segment. `MyLib.Particles.Advanced` → all nodes inside get `Advanced` aspect
+Four methods:
+1. **Group-level**: Use keyword as a category name segment. `MyLib.Particles.Advanced` → all nodes inside get `Advanced` aspect. For C#-imported types a *namespace* segment works the same way, because the sub-namespace tail is appended to the category and then keyword-parsed.
 2. **Datatype-level**: Set in Patch Explorer on Process/Record/Class. Applies to all nested elements
 3. **Operation-level**: Embed keyword in the Version portion: `GetBytes (Advanced)`, `Transform (Normal Advanced)`
+4. **C# symbol-level**: `[Smell(SymbolSmell.Advanced)]` from `VL.Core.Import`. Per symbol, does not cascade to members. See vvvv-node-libraries → *Aspects from C#*.
 
 Aspect keywords are **stripped** from resolved category: both `MyLib.Particles.Advanced` and `MyLib.Advanced.Particles` resolve to `MyLib.Particles`.
+
+Aspects filter the NodeBrowser listing only — an `Advanced`/`Hidden`/`Internal` symbol is still imported, still works as a pin type, and existing links and saved patches keep resolving.
 
 ### Adaptive Nodes
 

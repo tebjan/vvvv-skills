@@ -5,7 +5,7 @@ license: CC-BY-SA-4.0
 compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Tebjan Halm
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Writing Custom Nodes for vvvv gamma
@@ -23,7 +23,7 @@ What `[ProcessNode]` DOES:
 What `[ProcessNode]` does NOT do:
 
 - It does NOT make a class visible to vvvv. Visibility comes from the C# `public` access modifier plus an `[assembly: ImportAsIs/ImportNamespace/ImportType]` attribute. See vvvv-node-libraries for the import rules.
-- It does NOT hide internal helpers. If a helper is `public`, it's a node — period. Use `internal` to hide.
+- It does NOT hide internal helpers. If a helper is `public` and its namespace is imported, it's a node. To hide one: make it `internal` (removes it from VL entirely), or keep it public and tag it `[Smell(SymbolSmell.Internal)]` / `[Smell(SymbolSmell.Hidden)]` (stays usable as a pin type, just isn't browsable). See advanced.md → *Smell Attribute*.
 - It does NOT change pin generation. Pin generation is driven by the `Update()` method signature for `[ProcessNode]` classes, and by public method/property signatures for non-`[ProcessNode]` classes.
 
 **When to use `[ProcessNode]`:** the class needs frame-by-frame updates, persistent state between frames, or `IDisposable` cleanup. **When to skip `[ProcessNode]`:** stateless utility classes, value types, static helper methods — leaving the attribute off avoids the per-frame `Update()` ceremony, and the public methods become operation nodes automatically.
@@ -124,6 +124,19 @@ public class ParticleSystem
 ```
 
 Alternative: return `this` from a method to expose the instance.
+
+⚠️ **`HasStateOutput` also un-hides the class and all its public members as individual nodes.**
+`ImportedSymbol.GetSmell()` adds `SymbolSmell.Hidden` to the *type* whenever a
+`ProcessNodeAttribute` is present and `HasStateOutput == false` — which is why a normal
+`[ProcessNode]` class shows up as exactly one node and its `Update`/`Dispose`/properties do
+not clutter the browser. Flipping `HasStateOutput = true` removes that automatic `Hidden`,
+so the type entry plus every public member reappears as browsable nodes.
+
+If you need the state output but not the member spam, either add
+`[Smell(SymbolSmell.Advanced)]` to the noisy members, or avoid `HasStateOutput` entirely by
+giving `Update()` an explicit `out` parameter for the thing downstream nodes need. Note that
+switching an existing node away from `HasStateOutput` is a **breaking change** — saved patches
+reference the pin as `Kind="StateOutputPin"` and will red-node.
 
 ### Pin Visibility
 

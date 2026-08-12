@@ -2,7 +2,7 @@
 
 ## Contents
 - FragmentSelection (explicit control over node operations)
-- Smell Attribute (internal/experimental nodes)
+- Smell Attribute (aspects from C#: Advanced / Internal / Hidden / Experimental)
 - Dynamic Enums (runtime-updating dropdowns)
 - Settings / Split() Pattern (JSON + vvvv pin control)
 - Pin Name Derivation (camelCase to pin names)
@@ -27,12 +27,49 @@ public sealed class RenderWindow : IDisposable
 
 Only methods marked `[Fragment]` are exposed. Without `FragmentSelection.Explicit`, all public methods become node operations.
 
-## Smell Attribute (Internal/Experimental Nodes)
+## Smell Attribute — aspects from C#
+
+`[Smell]` is how you apply a vvvv **aspect** (Advanced / Internal / Hidden / Experimental /
+Obsolete / Adaptive) to an imported C# symbol. It is the per-symbol equivalent of naming a
+category segment `Advanced`.
 
 ```csharp
-[Smell(SymbolSmell.Internal)]       // Hidden from public node browser
-[Smell(SymbolSmell.Experimental)]   // Shown with experimental warning
+using VL.Core;          // SymbolSmell
+using VL.Core.Import;   // SmellAttribute  ← NOT VL.Core.CompilerServices
+
+[ProcessNode]
+[Smell(SymbolSmell.Internal)]
+public sealed class SkiaRendererNode : IDisposable { /* ... */ }
 ```
+
+> ⚠️ There are two `SmellAttribute` types. Use **`VL.Core.Import.SmellAttribute`**.
+> `VL.Core.CompilerServices.SmellAttribute` is `[Obsolete(error: true)]` — binary
+> compatibility only, and a compile error if you reference it.
+
+`VL.Core.SymbolSmell` is a `[Flags]` enum; `[Smell]` is `AttributeTargets.All`:
+
+| Flag | Effect on the symbol |
+|---|---|
+| `Default` | normal |
+| `Advanced` | hidden until the user turns on the NodeBrowser's Advanced filter |
+| `Hidden` | never offered in the NodeBrowser |
+| `Internal` | only available inside the defining document / library |
+| `Experimental` | listed, flagged as unstable / WIP |
+| `Obsolete` | listed, flagged as deprecated |
+| `Adaptive` | enrolls the node in adaptive type dispatch |
+
+**Aspects filter the browser listing only.** The symbol is still imported, still usable as a
+pin type, and existing links, IOBoxes and saved patches keep resolving. That is what makes
+`Advanced` the right tool for enums and settings types the user configures via a pin but
+should never have to find in the browser — as opposed to `internal`, which removes the type
+from VL entirely and would break such a pin.
+
+`[Smell]` on a type does **not** cascade to its members. To cover a whole group in one
+declaration, put the keyword in the category or namespace instead — see
+vvvv-node-libraries → *Aspects from C#*.
+
+Real-world reference: `VL.StandardLibs/VL.Skia/src/SkiaRendererNode.cs` (`Internal`) and
+`FormBoundsNotification.cs` (`Experimental`).
 
 ## Dynamic Enums
 
