@@ -68,57 +68,48 @@ For the underlying XML structure (if you must reason about a raw `.vl` diff), se
 
 ## Setting Up an Editable Dev Environment
 
-To edit a library's source live inside vvvv (instead of using its read-only binary nuget):
+To edit a library's source live inside vvvv, instead of its read-only binary nuget:
 
-1. Place the library folder inside a **package-repository** directory (the *parent* folder that
-   contains the package directory). Most libraries are a single folder, and you `git clone` that
-   folder directly into your repos folder — so the repos folder is the parent, and the cloned
-   library folder is the package.
-2. Launch vvvv pointing at it and marking the package editable (`D:\repos` below is just an
-   example path — any parent folder works):
-   ```
+1. Put the library folder inside a **package-repository** directory — the *parent* folder
+   containing the package folder. Normally: one repo = one package, `git clone`d straight into
+   your repos folder, which becomes the parent.
+2. Launch vvvv pointing at it (`D:\repos` is just an example path — any parent folder works):
+
+   ```cmd
    vvvv.exe --package-repositories "D:\repos" --editable-packages "VL.MyLib*"
    ```
-   - `--package-repositories` — semicolon-separated *parent* folders to scan for packages.
-   - `--editable-packages` — semicolon-separated package names / globs to load from source.
-     Source packages are **read-only by default**; this flag makes them editable.
-3. **Source beats binary:** vvvv prefers a source package over a binary nuget of the **same
-   name**. So you toggle between dev and production simply by adding/removing the source from the
-   package-repository path (or the `--editable-packages` list).
 
-> ⚠️ **Monorepo checkouts (e.g. `VL.StandardLibs`) are the exception, not the rule.**
-> Most vvvv libraries are one repo = one package, cloned straight into your repos folder. `VL.StandardLibs`
-> is special: it's **not itself a package** — it's a repo whose *immediate children*
-> (`VL.Stride`, `VL.Stride.Runtime`, `VL.Core`, `VL.CoreLib`, ...) are each their own package.
-> The rule "`--package-repositories` = the folder that directly contains the package folder"
-> therefore means **the monorepo root itself**, one level *deeper* than wherever you cloned it:
+   - `--package-repositories` — semicolon-separated parent folders to scan.
+   - `--editable-packages` — semicolon-separated names/globs to load from source and make
+     editable (source packages are **read-only by default** otherwise).
+3. **Source beats binary** — vvvv prefers a source package over a same-named nuget, so add/remove
+   it from the repository path (or `--editable-packages`) to toggle dev vs. production.
+
+> ⚠️ **Exception: monorepos like `VL.StandardLibs`.** It's not itself a package — its *children*
+> (`VL.Stride`, `VL.Stride.Runtime`, `VL.Core`, `VL.CoreLib`, ...) are. So `--package-repositories`
+> must point at the monorepo root itself, one level *deeper* than the clone target:
 >
 > ```cmd
 > git clone https://github.com/vvvv/VL.StandardLibs.git D:\debug-sources\VL.StandardLibs
 > vvvv.exe --package-repositories "D:\debug-sources\VL.StandardLibs" --editable-packages "VL.Stride*"
 > ```
 >
-> Pointing `--package-repositories` at `D:\debug-sources` (the parent of the monorepo checkout,
-> one level too high) means vvvv never finds any packages at all — there is no folder literally
-> named `VL.Stride` directly under `D:\debug-sources`. This is an easy off-by-one-directory
-> mistake specifically because the clone target's own folder name (`VL.StandardLibs`) looks like
-> it could be "the package," when it's actually just the container. Scope `--editable-packages`
-> to the specific child packages you actually use (e.g. `VL.Stride*`), never to the monorepo
-> folder's own name — there's nothing there to match.
+> Pointing at `D:\debug-sources` instead (one level too high) finds nothing — there's no folder
+> named `VL.Stride` there. Easy mistake, since the clone folder's own name (`VL.StandardLibs`)
+> looks like "the package" but is just the container. Glob `--editable-packages` to the actual
+> child packages (`VL.Stride*`), never the monorepo's own name.
 >
-> **Recompile warning:** if the scanned tree contains library **submodules** (e.g. a
-> `VL.StandardLibs/` checkout), pointing `--package-repositories` at the whole workspace makes
-> vvvv discover and **recompile every standard library from source** — many minutes. Point it at
-> a specific subfolder that contains only your package, or accept the one-time cost knowingly.
+> **Recompile warning:** scanning a tree with library submodules (e.g. a `VL.StandardLibs/`
+> checkout) makes vvvv recompile *every* standard library from source — many minutes. Point at a
+> subfolder with only your package, or accept the cost knowingly.
 >
-> **Fresh clone ≠ ready to compile.** vvvv's live Roslyn compilation for a source package still
-> needs that package's NuGet references already resolved (`obj/project.assets.json` present) —
-> a bare `git clone` has no `obj/` folder. Run `dotnet restore <specific>.csproj` for the exact
-> project(s) you need before pointing vvvv at the checkout. For a large monorepo, restore the
-> *specific* `.csproj` files you need rather than the top-level `.sln` — a `.sln` can reference
-> a project that was already removed from disk at an older pinned commit (a stale reference from
-> how a branch merge landed), which fails the whole-solution restore with `MSB3202`. Restoring
-> individual `.csproj` files pulls in their real transitive dependencies without hitting that.
+> **Fresh clone ≠ ready to compile.** vvvv's live Roslyn compiler still needs NuGet references
+> resolved (`obj/project.assets.json`) — a bare clone has none. Run `dotnet restore
+> <specific>.csproj` for exactly the project(s) you need before launching vvvv. For a large
+> monorepo, restore those specific `.csproj` files, not the top-level `.sln` — a `.sln` can
+> reference a project already deleted at an older pinned commit (stale from a branch merge),
+> failing whole-solution restore with `MSB3202`; per-project restore pulls correct transitive
+> deps without hitting that.
 
 See the `vvvv-startup` skill for full CLI details and the `vvvv-debugging` skill for attaching
 a debugger to the editable package and the launch.json setup.
