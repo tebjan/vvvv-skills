@@ -71,10 +71,13 @@ For the underlying XML structure (if you must reason about a raw `.vl` diff), se
 To edit a library's source live inside vvvv (instead of using its read-only binary nuget):
 
 1. Place the library folder inside a **package-repository** directory (the *parent* folder that
-   contains the package directory).
-2. Launch vvvv pointing at it and marking the package editable:
+   contains the package directory). Most libraries are a single folder, and you `git clone` that
+   folder directly into your repos folder — so the repos folder is the parent, and the cloned
+   library folder is the package.
+2. Launch vvvv pointing at it and marking the package editable (`D:\repos` below is just an
+   example path — any parent folder works):
    ```
-   vvvv.exe --package-repositories "D:\repos" --editable-packages "VL.StandardLibs*"
+   vvvv.exe --package-repositories "D:\repos" --editable-packages "VL.MyLib*"
    ```
    - `--package-repositories` — semicolon-separated *parent* folders to scan for packages.
    - `--editable-packages` — semicolon-separated package names / globs to load from source.
@@ -83,10 +86,39 @@ To edit a library's source live inside vvvv (instead of using its read-only bina
    name**. So you toggle between dev and production simply by adding/removing the source from the
    package-repository path (or the `--editable-packages` list).
 
+> ⚠️ **Monorepo checkouts (e.g. `VL.StandardLibs`) are the exception, not the rule.**
+> Most vvvv libraries are one repo = one package, cloned straight into your repos folder. `VL.StandardLibs`
+> is special: it's **not itself a package** — it's a repo whose *immediate children*
+> (`VL.Stride`, `VL.Stride.Runtime`, `VL.Core`, `VL.CoreLib`, ...) are each their own package.
+> The rule "`--package-repositories` = the folder that directly contains the package folder"
+> therefore means **the monorepo root itself**, one level *deeper* than wherever you cloned it:
+>
+> ```cmd
+> git clone https://github.com/vvvv/VL.StandardLibs.git D:\debug-sources\VL.StandardLibs
+> vvvv.exe --package-repositories "D:\debug-sources\VL.StandardLibs" --editable-packages "VL.Stride*"
+> ```
+>
+> Pointing `--package-repositories` at `D:\debug-sources` (the parent of the monorepo checkout,
+> one level too high) means vvvv never finds any packages at all — there is no folder literally
+> named `VL.Stride` directly under `D:\debug-sources`. This is an easy off-by-one-directory
+> mistake specifically because the clone target's own folder name (`VL.StandardLibs`) looks like
+> it could be "the package," when it's actually just the container. Scope `--editable-packages`
+> to the specific child packages you actually use (e.g. `VL.Stride*`), never to the monorepo
+> folder's own name — there's nothing there to match.
+>
 > **Recompile warning:** if the scanned tree contains library **submodules** (e.g. a
 > `VL.StandardLibs/` checkout), pointing `--package-repositories` at the whole workspace makes
 > vvvv discover and **recompile every standard library from source** — many minutes. Point it at
 > a specific subfolder that contains only your package, or accept the one-time cost knowingly.
+>
+> **Fresh clone ≠ ready to compile.** vvvv's live Roslyn compilation for a source package still
+> needs that package's NuGet references already resolved (`obj/project.assets.json` present) —
+> a bare `git clone` has no `obj/` folder. Run `dotnet restore <specific>.csproj` for the exact
+> project(s) you need before pointing vvvv at the checkout. For a large monorepo, restore the
+> *specific* `.csproj` files you need rather than the top-level `.sln` — a `.sln` can reference
+> a project that was already removed from disk at an older pinned commit (a stale reference from
+> how a branch merge landed), which fails the whole-solution restore with `MSB3202`. Restoring
+> individual `.csproj` files pulls in their real transitive dependencies without hitting that.
 
 See the `vvvv-startup` skill for full CLI details and the `vvvv-debugging` skill for attaching
 a debugger to the editable package and the launch.json setup.
