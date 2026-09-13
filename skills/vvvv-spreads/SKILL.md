@@ -12,7 +12,7 @@ metadata:
 
 ## What Are Spreads
 
-`Spread<T>` is vvvv's immutable collection type, conceptually similar to `ImmutableArray<T>`. It is the primary way to pass collections between nodes.
+`Spread<T>` is vvvv's immutable collection type, conceptually similar to `ImmutableArray<T>`. Nodes return collections as `Spread<T>`; they never take `Spread<T>` as an input type (see Collection Inputs).
 
 Key properties:
 - **Immutable** — never modify in place, always create new spreads
@@ -73,7 +73,7 @@ for (int i = 0; i < spread.Count; i++)
 ### Map (Transform Each Element)
 
 ```csharp
-public static Spread<float> Scale(Spread<float> input, float factor = 1f)
+public static Spread<float> Scale(IReadOnlyList<float> input, float factor = 1f)
 {
     var builder = new SpreadBuilder<float>(input.Count);
     foreach (var value in input)
@@ -85,7 +85,7 @@ public static Spread<float> Scale(Spread<float> input, float factor = 1f)
 ### Filter
 
 ```csharp
-public static Spread<float> FilterAbove(Spread<float> input, float threshold = 0.5f)
+public static Spread<float> FilterAbove(IEnumerable<float> input, float threshold = 0.5f)
 {
     var builder = new SpreadBuilder<float>();
     foreach (var value in input)
@@ -100,7 +100,7 @@ public static Spread<float> FilterAbove(Spread<float> input, float threshold = 0
 ### Zip (Process Two Spreads Together)
 
 ```csharp
-public static Spread<float> Add(Spread<float> a, Spread<float> b)
+public static Spread<float> Add(IReadOnlyList<float> a, IReadOnlyList<float> b)
 {
     int count = Math.Max(a.Count, b.Count);
     var builder = new SpreadBuilder<float>(count);
@@ -117,7 +117,7 @@ public static Spread<float> Add(Spread<float> a, Spread<float> b)
 ### Accumulate (Running Total)
 
 ```csharp
-public static Spread<float> RunningSum(Spread<float> input)
+public static Spread<float> RunningSum(IReadOnlyList<float> input)
 {
     var builder = new SpreadBuilder<float>(input.Count);
     float sum = 0f;
@@ -149,7 +149,19 @@ public class ParticleSimulator
 }
 ```
 
-Use `Spread<T>` for infrequent config inputs; use `ReadOnlySpan<T>` for high-frequency frame data.
+## Collection Inputs: Never `Spread<T>`
+
+| The node needs | Input type |
+|---|---|
+| the count, or index access | `IReadOnlyList<T>` |
+| only to iterate | `IEnumerable<T>` |
+
+A `Spread<T>` connects to both (it implements `IReadOnlyList<T>`), and so do arrays, lists and every
+other collection a user wires. An input typed `Spread<T>` accepts nothing else and forces
+conversions. Outputs stay `Spread<T>`.
+
+The one place VL.StandardLibs declares a `Spread<T>` parameter is a collection pin group
+(`PinGroupKind.Collection`, the add/remove-button pins). Check before giving a pin group another type.
 
 ## Performance Rules
 
@@ -166,12 +178,12 @@ Use `Spread<T>` for infrequent config inputs; use `ReadOnlySpan<T>` for high-fre
 [ProcessNode]
 public class SpreadProcessor
 {
-    private Spread<float> _lastInput = Spread<float>.Empty;
+    private IReadOnlyList<float> _lastInput = Spread<float>.Empty;
     private Spread<float> _cachedOutput = Spread<float>.Empty;
 
     public void Update(
         out Spread<float> output,
-        Spread<float> input = default)
+        IReadOnlyList<float>? input = null)
     {
         input ??= Spread<float>.Empty;
 

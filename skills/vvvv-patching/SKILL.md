@@ -82,6 +82,6 @@ Channels provide two-way data binding:
 1. **Circular dependencies** — use FrameDelay to break cycles
 2. **Too many nodes in one patch** — extract sub-patches
 3. **Polling instead of reacting** — use Channels for reactive updates
-4. **Ignoring Nil** — always handle null/empty Spread inputs gracefully
+4. **Ignoring Nil** — always handle null/empty collection inputs gracefully
 
 For common patterns reference, see [patterns.md](patterns.md).

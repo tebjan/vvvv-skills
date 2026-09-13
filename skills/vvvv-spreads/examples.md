@@ -47,7 +47,7 @@ Pattern for processing spreads only when they change:
 [ProcessNode]
 public class NormalizeSpread
 {
-    private Spread<float> _lastInput = Spread<float>.Empty;
+    private IReadOnlyList<float> _lastInput = Spread<float>.Empty;
     private Spread<float> _cachedOutput = Spread<float>.Empty;
 
     /// <summary>
@@ -55,7 +55,7 @@ public class NormalizeSpread
     /// </summary>
     public void Update(
         out Spread<float> output,
-        Spread<float> input = default)
+        IReadOnlyList<float>? input = null)
     {
         input ??= Spread<float>.Empty;
 
@@ -96,12 +96,12 @@ Common pattern: a Spread of config objects drives a multi-instance system:
 [ProcessNode]
 public class MultiEffectProcessor
 {
-    private Spread<EffectConfig> _lastConfigs = Spread<EffectConfig>.Empty;
+    private IReadOnlyList<EffectConfig> _lastConfigs = Spread<EffectConfig>.Empty;
     private List<EffectInstance> _instances = new();
 
     public void Update(
         out Spread<float> results,
-        Spread<EffectConfig> configs = default)
+        IReadOnlyList<EffectConfig>? configs = null)
     {
         configs ??= Spread<EffectConfig>.Empty;
 
@@ -135,7 +135,7 @@ public class MultiEffectProcessor
 ## Interleave Two Spreads
 
 ```csharp
-public static Spread<T> Interleave<T>(Spread<T> a, Spread<T> b)
+public static Spread<T> Interleave<T>(IReadOnlyList<T> a, IReadOnlyList<T> b)
 {
     var builder = new SpreadBuilder<T>(a.Count + b.Count);
     int max = Math.Max(a.Count, b.Count);

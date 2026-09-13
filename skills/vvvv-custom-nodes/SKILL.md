@@ -155,9 +155,16 @@ public void Update(
 }
 ```
 
+### Collection Inputs
+
+A collection input is `IReadOnlyList<T>` when the node needs the count or index access, otherwise
+`IEnumerable<T>`. Never `Spread<T>`: a spread still connects to both, and so does every other
+collection. Outputs stay `Spread<T>`.
+
 ### Pin Groups (Collection Inputs)
 
-For Spread inputs with add/remove buttons in vvvv:
+For a variable number of inputs with add/remove buttons. VL.StandardLibs declares collection pin
+groups as `Spread<T>`; this is the only place a `Spread<T>` parameter appears:
 
 ```csharp
 public void Update(
