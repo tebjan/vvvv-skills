@@ -12,7 +12,7 @@ metadata:
 
 ## Dataflow Basics
 
-- **Left-to-right, top-to-bottom** execution order
+- **Top-to-bottom dependency flow** within a subgraph; peer subgraphs read left-to-right on the 2D canvas. Position does not determine execution order.
 - **Links** carry data between pads (input/output connection points)
 - **Spreading** — connecting a `Spread<T>` to a single-value input auto-iterates the node
 - Every frame, the entire connected graph evaluates; disconnected subgraphs are skipped
@@ -76,6 +76,26 @@ Channels provide two-way data binding:
 - Extract reusable logic into sub-patches
 - Use **IOBox** nodes for exposing parameters
 - Add **Pad** nodes to create input/output pins on the patch boundary
+
+### Local access and human-readable groups
+
+Keep each demonstration's controls, feature nodes and result together. Place reads
+of a shared input beside their consumers, including inside helpers: multiple canvas
+placements may refer to the same signature parameter without adding extra inputs.
+Named Slots can provide local accesses to shared state, but they are not invisible
+wires: check initialization, read/write ordering, null handling and resource lifetime.
+A reference-valued Slot does not automatically make a frame delay safe.
+
+Extract identical plumbing into a small Process helper, or use a loop when the
+instances genuinely share one topology. Stateful calls require persistent state
+per call or iteration; do not update one mutable renderer repeatedly and collect
+aliases of its output. Keep genuinely different techniques explicit.
+
+Preserve human-authored positions, widths and comments. Lay out new elements
+locally; if room is needed, translate an existing coherent group rigidly rather
+than reflowing the whole patch. Review helper canvases independently of the root.
+For the XML contracts behind local placements and Slots, see
+[local access](../vvvv-fileformat/local-access.md).
 
 ## Common Anti-Patterns
 

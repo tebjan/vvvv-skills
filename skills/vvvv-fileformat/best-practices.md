@@ -6,13 +6,14 @@ Layout, positioning, and visual organization guide for generating well-structure
 
 ## Data Flow Direction
 
-**Data always flows top-to-bottom.** This is the most important layout rule.
+**Show dependency flow top-to-bottom inside each subgraph.** Peer subgraphs read
+left-to-right on the 2D canvas. Canvas position does not determine evaluation order.
 
 - Inputs at the **top**, outputs at the **bottom**
 - Input Pads above the nodes they feed
 - Output Pads below the nodes they receive from
 - Links go from smaller Y to larger Y (top → bottom)
-- Only feedback links (`IsFeedback="true"`) flow bottom-to-top
+- Use actual state boundaries for feedback; `IsFeedback="true"` alone does not create a delay
 
 ```
 [Input Pad]        y = 200
@@ -52,7 +53,11 @@ Layout, positioning, and visual organization guide for generating well-structure
 
 ### Horizontal Alignment
 
-Connected elements should be roughly X-aligned. Input pads align within 1-4 px of their node. Output pads offset +2 px right of source node.
+Align the actual source/output and destination/input pin anchors, not node centres.
+Pins are left-aligned across the effective width, with hidden pins excluded and
+declaration order preserved. Deliberately widened nodes carry layout intent.
+Keep diagonals when straightening would overlap elements or disrupt a human group.
+See [local-access.md](local-access.md) for geometry and shared input/Slot contracts.
 
 ### Staircase Pattern (Multiple Inputs)
 
@@ -111,7 +116,7 @@ Standard node height is **19 px** (~80% of all nodes).
 
 - **Definition nodes** (Application, type defs): 2-value `"X,Y"`
 - **Processing nodes** (operation calls): 4-value `"X,Y,W,H"`
-- **Pads**: 4-value `"X,Y,W,H"`
+- **Value IOBoxes**: 4-value `"X,Y,W,H"`; plain Slot Pads may use 2-value `"X,Y"`
 - **ControlPoints**: 2-value `"X,Y"`
 
 ---
@@ -196,9 +201,9 @@ y=370:  [Output A]                 [Output B]
 
 One source feeding multiple parallel nodes:
 
-- All destination nodes at **identical Y**
-- Spread horizontally at ~100-165 px intervals
-- Each output pad X-aligned +2 px right of its node
+- Keep related consumers together; stagger Y when rigid alignment causes overlap
+- For shared Process inputs, use local placements near consumers rather than remote fan-out
+- Align each short local link by its pin anchors; spacing figures are starting points, not rules
 
 ---
 

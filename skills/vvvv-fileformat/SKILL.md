@@ -177,7 +177,10 @@ Note the lowercase `i` in `isIOBox`. Common types: `Boolean`, `Int32`, `Float32`
 <Link Id="..." Ids="outputPinId,inputPinId" />
 ```
 
-`Ids` format: `"sourceId,sinkId"` — output first, input second. Use `IsFeedback="true"` for feedback loops, `IsHidden="true"` for reference links.
+`Ids` lists the source first and sink last; saved links may have intermediate routing
+hubs. `IsHidden="true"` is used for reference links. Do not add `IsFeedback="true"`
+to an ordinary cycle and assume it creates stored state: use an actual state
+boundary and verify its read/write semantics. See [local access](local-access.md).
 
 ## ProcessDefinition and Fragments
 
@@ -194,6 +197,11 @@ Note the lowercase `i` in `isIOBox`. Common types: `Boolean`, `Int32`, `Float32`
 ```
 
 Fragment `Patch` attribute references a sibling `<Patch>` element's `Id`.
+
+A Process Application needs enabled Create and Update fragments targeting real
+sibling patches. A visible Application canvas alone does not prove that its
+dataflow executes. Process calls also need the target's real lifecycle/signature
+metadata; valid XML cannot prove node resolution or inferred types.
 
 ## Regions
 
@@ -284,7 +292,7 @@ Region patch names: If uses `Then`/`Else`, ForEach uses `Create`/`Update`/`Dispo
 2. `xmlns:p="property"` must be on `Document`
 3. `Version="0.128"` always required
 4. Fragment `Patch` must reference existing sibling Patch IDs
-5. Link `Ids`: exactly `"sourceId,sinkId"` — output first
+5. Link `Ids`: at least source and sink, output first; preserve intermediate hubs
 6. `CanvasType="FullCategory"` only for root canvas
 7. Every document needs `VL.CoreLib` dependency
 8. Application node is the entry point (Name="Application", ContainerDefinition)
@@ -303,6 +311,8 @@ Region patch names: If uses `Then`/`Else`, ForEach uses `Create`/`Update`/`Dispo
 
 For the complete element reference with all attributes, Choice kinds, and serialization details, see [format-reference.md](format-reference.md).
 For layout conventions, spacing, positioning, and visual organization best practices, see [best-practices.md](best-practices.md).
+For repeated input placements, shared Slot reads, scoped geometry and safe helper
+construction, see [local-access.md](local-access.md).
 
 ## Keep this knowledge growing
 
