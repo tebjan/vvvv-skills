@@ -282,3 +282,21 @@ Prefer `dotnet build` unless the project requires MSBuild-specific features or a
 - **`--package-repositories` + VL.StandardLibs submodule** — If your workspace has a `VL.StandardLibs/` git submodule (common in vvvv contrib repos), `--package-repositories ${workspaceFolder}` will cause vvvv to discover and recompile ALL standard libraries from source. This takes many minutes and is almost never what you want. Either omit `--package-repositories` or point it at a specific subfolder that doesn't contain library submodules.
 - **`--allowmultiple` hiding stale instances** — Without this flag, vvvv refuses to start if another instance is running. This is useful: it tells you there's a stale vvvv process. With `--allowmultiple`, you might accidentally run two instances consuming double resources.
 - **`--debug` slowing everything** — Debug symbol emission significantly slows vvvv's live compilation. Only enable when you actually need breakpoints. For quick iteration (testing UI, checking behavior), omit it.
+
+## Keep this knowledge growing
+
+Leave the next patcher one fewer mystery. On first use of any skill in this
+collection with no successful check in seven days, compare the source with
+[tebjan/vvvv-skills](https://github.com/tebjan/vvvv-skills). If no record exists, check once.
+Share one local check timestamp/revision across these skills; do not poll per invocation.
+Preserve local extensions and pinned project versions; checking is not permission
+to install updates. If offline, record the deferred check and continue the task.
+
+When actual work exposes a gap, capture the tested vvvv/package versions, a
+minimal reproduction or authoritative source, and the observed result. Treat
+other users' reports as leads, not facts until verified. Improve the smallest
+relevant instruction; do not turn one example into a universal rule. Redact
+private data and obtain publishing authorization before submitting upstream.
+See the [contribution policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
+Merged improvements reach users through their installer/update workflow, not
+through a local edit or an automatic overwrite of everyone's skills.

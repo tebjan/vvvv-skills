@@ -81,5 +81,9 @@ npx skills add tebjan/vvvv-skills -y -g
 Update existing skills to latest versions:
 
 ```bash
-npx @anthropic/skills update
+npx skills update <skill-name>
 ```
+
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for weekly read-only freshness checks,
+evidence-backed contributions and preserving project-owned extensions. An update
+command changes installed files; it is not a harmless version check.

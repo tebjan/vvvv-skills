@@ -81,6 +81,12 @@ No build step is needed for source project references — vvvv handles compilati
 
 ## Contributing
 
+Help the next patcher avoid a rediscovery: follow the [contribution and weekly
+freshness policy](CONTRIBUTING.md). Share minimal, reproducible findings with their
+tested versions; reports and guesses are not yet facts. Merged improvements are
+distributed through users' authorized installation/update workflows, not by
+silently overwriting local skills or project-specific extensions.
+
 ### Adding a New Skill
 
 1. Create a directory under `skills/` with a descriptive name (lowercase, hyphens)
