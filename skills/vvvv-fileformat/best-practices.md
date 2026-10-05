@@ -72,6 +72,17 @@ Pad "Alpha"    Bounds="192,270,35,15"    offset: +27x, +27y
 Node "RGBA Join"  Bounds="110,305,73,26"
 ```
 
+Follow destination pin order and dependencies, not a uniform grid. Stagger
+heights to leave labels and wires clear; these offsets are examples, not fixed
+constants. A value feeding several stages belongs above its earliest consumer.
+An offset helper/transform lane can keep a long main data link unobstructed;
+short diagonals are preferable to overlap or an unnecessarily large canvas.
+
+When a human improves one repeated cluster, match peers by semantic roles,
+links and pin identity. Reuse relative geometry only for explicitly targeted
+peers; preserve the exemplar, values and stretched widths. Do not match by
+current values or old X positions alone, or flatten the controls back into rows.
+
 ### Multiple Outputs
 
 Spread output pads horizontally:
@@ -184,7 +195,8 @@ Category hierarchy via nesting:
 When showing multiple related concepts side by side:
 
 - Arrange sections **left-to-right** with 350-400 px horizontal gaps
-- **Y-align corresponding elements** across sections (titles, nodes, outputs at same Y)
+- Y-align corresponding layers when useful; stagger heights when rigid alignment
+  would overlap labels, nodes or wires
 - Each section has its own title, inputs, processing nodes, outputs
 
 ```

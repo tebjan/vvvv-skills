@@ -94,6 +94,11 @@ aliases of its output. Keep genuinely different techniques explicit.
 Preserve human-authored positions, widths and comments. Lay out new elements
 locally; if room is needed, translate an existing coherent group rigidly rather
 than reflowing the whole patch. Review helper canvases independently of the root.
+Learn from deliberate human edits: order controls by destination pins, stagger
+heights, put shared values above their earliest consumer and leave clear helper
+lanes. Transfer relative geometry to explicitly targeted semantic peers without
+copying values or disturbing the exemplar. Compare geometry and topology
+separately from editor-save metadata; do not infer intent from text diff size.
 For the XML contracts behind local placements and Slots, see
 [local access](../vvvv-fileformat/local-access.md).
 

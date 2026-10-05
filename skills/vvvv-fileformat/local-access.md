@@ -81,6 +81,19 @@ coordinate systems. Hidden reference links are not visible wires. Include visibl
 comments, labels and grouping overlays in collision review; rectangle-only checks
 do not prove readability. Compare new collisions with the human-saved baseline.
 
+Learn from a human save by comparing stable IDs, position changes, width-only
+changes, values, call references and link endpoints separately. Editor-generated
+pin/reference metadata can make a text diff large without changing graph topology.
+For repeated clusters, preserve the human exemplar and transfer relationships
+only to explicitly targeted semantic peers: pin-order staircases, local reads,
+shared values above the earliest consumer, and unobstructed helper lanes.
+
+Count crossings between wires attached to different pins even when they share
+one node. Only a shared endpoint is a junction; sharing a consumer is not grounds
+to skip the comparison. Review labels and wires through unrelated boxes too.
+State the inspected canvas and remaining defects; fewer crossings do not prove
+that the whole document is tidy or that it compiles.
+
 Validate and inspect the persisted document, then compile/render in the matching
 vvvv version and test save/reopen. XML, pin geometry and SVG previews alone do
 not prove type resolution, runtime execution or visual parity. Emit BOM-free UTF-8
