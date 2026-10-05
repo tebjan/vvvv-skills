@@ -99,6 +99,14 @@ heights, put shared values above their earliest consumer and leave clear helper
 lanes. Transfer relative geometry to explicitly targeted semantic peers without
 copying values or disturbing the exemplar. Compare geometry and topology
 separately from editor-save metadata; do not infer intent from text diff size.
+If the user explicitly asks to apply this convention throughout one document,
+inventory every executable canvas, including helpers and Application. Implement
+the layout on matching roles, adapt unique subgraphs deliberately and audit each
+canvas independently. A diff study or skill update is not that implementation.
+Preserve the exemplar, already-correct human groups and other documents; prove
+non-geometric XML unchanged and verify a second application does not drift.
+Report residual shared-fanout/collection crossings honestly, without reordering
+pins or changing links merely to improve a geometric metric.
 For the XML contracts behind local placements and Slots, see
 [local access](../vvvv-fileformat/local-access.md).
 
