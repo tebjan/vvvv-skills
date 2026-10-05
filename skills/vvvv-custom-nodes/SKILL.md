@@ -187,11 +187,20 @@ For defaults that cannot be C# literal expressions:
 
 ```csharp
 public void Update(
-    [DefaultValue(typeof(Color4), "0.1, 0.1, 0.15, 1.0")] Color4 clearColor,
+    [DefaultValue(typeof(Color4), "R:0.1 G:0.1 B:0.15 A:1")] Color4 clearColor,
+    [DefaultValue(typeof(Vector3), "X:0 Y:3 Z:0")] Vector3 position,
     [DefaultValue(typeof(Int2), "1920, 1080")] Int2 size,
     bool clear = true)
 { }
 ```
+
+In Stride 4.2.1, `Color4Converter` and `Vector3Converter` parse named floating
+components: `R:... G:... B:... A:...` and `X:... Y:... Z:...`, respectively.
+Vector field names are case-sensitive. Comma lists are invalid for these types;
+`DefaultValueAttribute` can swallow conversion errors and leave `Value` null,
+silently importing black/zero defaults. Verify the actual loaded attribute's
+`Value` against the intended struct, not just its source string. Other types use
+their own registered converter; do not generalize this grammar to every struct.
 
 ## Attributes — when you actually need them
 
