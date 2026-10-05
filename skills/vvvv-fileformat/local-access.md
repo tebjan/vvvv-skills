@@ -53,6 +53,14 @@ Dispose/recreation: delaying a pointer does not keep its owner alive.
 `IsFeedback="true"` alone does not synthesize a delay; the inspected compiler
 skips that assignment. Use real state and inspect compiled behavior.
 
+Orphan analysis must follow valid same-definition Slot read/write accessors for
+reachability. A resource producer writing a Slot can feed helpers through other
+read Pads without any physical Link between those Pads. Do not delete it based
+on a physical-link-only warning. Model this separately from directed execution
+dependencies: shared state does not invent a current-frame scheduling edge or
+repair a cycle. Confirm the tool/server actually loaded its updated implementation
+before changing a human-saved patch to satisfy a stale diagnostic.
+
 ## Construct nodes from contracts
 
 Resolve full node names, dependencies, categories, input/output types and pin order
