@@ -39,10 +39,16 @@ For nodes managing external resources (files, servers, GPU objects):
 
 ## Animation/Interpolation Pattern
 
-1. Use `FrameClock.TimeDifference` for frame-independent animation
-2. Lerp between values using normalized time
-3. Use dampening for smooth transitions
-4. Output both current value and "is animating" flag
+For repeating time-based patch animation:
+
+1. Wire `LFO.Cycles` into `GetSlice.Index`, with the desired sequence in a typed
+   IOBox feeding `GetSlice.Input`.
+2. Wire `LFO.Phase` into `CosineWave` for a smooth cyclic value.
+3. Preserve the intended period, sequence values, phase and output scaling;
+   avoid deriving seconds from FrameCounter using an assumed frame rate.
+
+For custom integration use `FrameClock.TimeDifference`; interpolation and
+dampening remain useful for transitions rather than periodic waveform plumbing.
 
 ## Topology Change Detection
 

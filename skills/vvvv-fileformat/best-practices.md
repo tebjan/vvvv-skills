@@ -302,6 +302,11 @@ Forward definitions use 2-value Bounds and always include:
 
 Standard patch names: `Create`, `Update`, `Dispose`, `Then`, `Else`, `Split`, `Render`, `Notify`.
 
+Custom Process/node registration names use PascalCase without spaces. Keep stock
+library names and readable pin labels intact. Rename a local definition and its
+matching call selectors together; an instance label alone does not change the
+registered name. Public node renames need [compatible aliases](../vvvv-custom-nodes/advanced.md#compatible-processnode-renames).
+
 ---
 
 ## Complete Layout Recipe

@@ -98,6 +98,12 @@ The `<p:NodeReference>` property defines what a Node IS. It contains `<Choice>` 
 - First Choice: `Kind="NodeFlag"` with `Fixed="true"` (shape indicator)
 - Second Choice: `ProcessAppFlag` (stateful) or `OperationCallFlag` (stateless)
 
+Custom Process/node registration names use PascalCase without spaces. Preserve
+actual stock/imported names. A local rename must update both its definition and
+matching call selectors, not just an instance label. Public registrations need
+[compatible aliases](../vvvv-custom-nodes/advanced.md#compatible-processnode-renames)
+so existing saved references still resolve.
+
 ### Type Definitions
 
 ```xml

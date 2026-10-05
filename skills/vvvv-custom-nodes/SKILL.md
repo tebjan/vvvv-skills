@@ -67,7 +67,7 @@ public class MyTransform : IDisposable
 
 ### Non-Negotiable Rules
 
-1. **`[ProcessNode]` attribute** on every stateful node class
+1. **`[ProcessNode]` metadata** on every stateful node class; use a supported `ProcessNodeFactory` when compatibility requires aliases
 2. **No "Node" in the vvvv-visible name** — everything in vvvv is already a node, so "Node" suffix is redundant
 3. **`out` parameters FIRST**, value inputs with defaults AFTER
 4. **XML comments** on class and Update method (shown as tooltip in vvvv)
@@ -96,6 +96,10 @@ Implications for node authors:
 ### Class Naming vs Node Name
 
 The rule is: **users must never see "Node" in vvvv's node browser**. How you achieve this:
+
+Custom registration names use PascalCase without spaces, not just a renamed
+instance label. Preserve stock/imported names and readable pin labels. For public
+renames, retain saved selectors through [compatible aliases](advanced.md#compatible-processnode-renames).
 
 ```csharp
 // Simple: class name IS the node name — no suffix needed

@@ -64,12 +64,17 @@ Channels provide two-way data binding:
 - **FrameDelay** — delays a value by one frame (breaks circular dependencies)
 - Use `Changed` node to detect when a value changes between frames
 
+For repeating time-based animation, use native `LFO`, `GetSlice` and `CosineWave`
+wiring; see [animation patterns](patterns.md#animationinterpolation-pattern).
+
 ## Patch Organization
 
 ### Naming Conventions
 - Use PascalCase for patch names and node names
 - Group related operations under a common category
 - Use descriptive names that indicate the operation (verb + noun)
+- Custom Process and node registration names have no spaces. Preserve actual
+  stock/imported names, pin labels and prose; synchronize definitions and calls.
 
 ### Structure
 - Keep patches focused — one purpose per patch
@@ -107,6 +112,12 @@ Preserve the exemplar, already-correct human groups and other documents; prove
 non-geometric XML unchanged and verify a second application does not drift.
 Report residual shared-fanout/collection crossings honestly, without reordering
 pins or changing links merely to improve a geometric metric.
+
+For an explicitly independent renderer peer collection, source-X order can
+reduce crossings at its Group. Collection slots also determine execution order:
+preserve producer-before-consumer GPU stages and never sort all Groups globally.
+Keep hero/demo renderers and utility geometry visually distinct where this
+clarifies the feature; keep each demo's controls and local helper inputs nearby.
 For the XML contracts behind local placements and Slots, see
 [local access](../vvvv-fileformat/local-access.md).
 
