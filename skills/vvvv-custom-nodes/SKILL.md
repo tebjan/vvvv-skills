@@ -99,7 +99,10 @@ The rule is: **users must never see "Node" in vvvv's node browser**. How you ach
 
 Custom registration names use PascalCase without spaces, not just a renamed
 instance label. Preserve stock/imported names and readable pin labels. For public
-renames, retain saved selectors through [compatible aliases](advanced.md#compatible-processnode-renames).
+renames, preserve compatibility through [aliases](advanced.md#compatible-processnode-renames)
+unless the owner explicitly requests a breaking migration without legacy code.
+In that case migrate owned selectors and authoring catalogs/tests before removing
+aliases; document that external saved patches must migrate too.
 
 ```csharp
 // Simple: class name IS the node name — no suffix needed

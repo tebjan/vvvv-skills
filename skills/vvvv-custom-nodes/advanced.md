@@ -87,6 +87,16 @@ category selector. Preserve `HasStateOutput` on both entries and set factory
 Metadata discovery adds no frame work. Test old and new saved selectors in the
 target vvvv; parsing category flags alone does not prove live patch acceptance.
 
+An explicitly requested breaking migration is different: migrate all owned saved
+selectors with the canonical editor, preserve IDs/pins/links/geometry, update
+authoring catalogs and regression tests, then remove the aliases and their
+factories. Ordinary direct ProcessNode attributes may replace a naming-only
+factory while keeping its canonical name/category and HasStateOutput unchanged.
+In the verified importer, direct HasStateOutput also controls imported-class
+visibility; preserve the former factory ImportClass behavior. Inspect deployed
+metadata as well as source. External patches need their own selector migration;
+do not describe a hidden alias as removed while it remains registered.
+
 ## Dynamic Enums
 
 Runtime-updating dropdowns for vvvv:
