@@ -1,0 +1,24 @@
+{
+  "name": "vvvv-patch-tools",
+  "version": "0.1.0",
+  "description": "Persistent MCP tools for safe, loss-preserving vvvv gamma patch editing.",
+  "author": {
+    "name": "vvvv-skills contributors"
+  },
+  "license": "CC-BY-SA-4.0",
+  "keywords": ["vvvv", "gamma", "VL", "patch", "MCP"],
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "vvvv Patch Tools",
+    "shortDescription": "Persistent, validated vvvv .vl editing",
+    "longDescription": "Open a vvvv gamma patch once, inspect compact semantic views, batch safe edits, validate, and save BOM-free XML.",
+    "developerName": "vvvv-skills contributors",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write", "MCP"],
+    "defaultPrompt": [
+      "Open a vvvv patch and show its compact graph view.",
+      "Validate this patch and list disconnected operational nodes.",
+      "Batch-edit this vvvv patch and save only after validation."
+    ]
+  }
+}

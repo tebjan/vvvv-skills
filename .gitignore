@@ -24,3 +24,11 @@ Thumbs.db
 
 # Installed skills
 .agents/
+
+# Bundled Python patch editor: sources and lock are public, environments are not.
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+dist/

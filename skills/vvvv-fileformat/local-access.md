@@ -69,7 +69,8 @@ picture. Process calls need persistent state and correct enabled lifecycle
 fragments; loops need independent state per iteration and coherent dimensions.
 An alias to one repeatedly updated renderer is not a collection of renderers.
 
-Group collection slot order is execution order. Only for explicitly independent
+For renderer groups that traverse children sequentially, collection slot order
+is execution order. Only for explicitly independent
 renderer peers, assign slots left-to-right by source anchors to reduce crossings.
 Keep GPU producers before their consumers; never globally sort Groups by canvas X.
 This changes wiring order, so make it an intentional graph edit rather than an

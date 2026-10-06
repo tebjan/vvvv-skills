@@ -1,11 +1,10 @@
 ---
 name: vvvv-fileformat
-description: "Describes the .vl XML file format used by vvvv gamma — document structure, element hierarchy, ID system (base62 GUIDs), NodeReference/Choice patterns, Pins, Pads (IOBoxes), Links, ProcessDefinition/Fragment lifecycle, regions (If/ForEach/Cache), type definitions, TypeAnnotations, and property serialization. Use when generating, parsing, or modifying .vl files programmatically, or when understanding the structure of vvvv patches at the XML level."
+description: "Describes and safely edits the vvvv gamma .vl XML format, including document structure, IDs, nodes, pins, pads, links, visible help annotations, exact editor pin geometry, Help Browser registration, and human-preserving layout. Use when generating, parsing, validating, or modifying .vl files programmatically."
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
   author: Kopffarben 
-  version: "1.0"
+  version: "1.1"
 ---
 
 # VL File Format (.vl)
@@ -23,6 +22,19 @@ A `.vl` file is an XML document encoding a visual dataflow program for vvvv gamm
 - **Canvas** — visual grouping container (no logical scope)
 - **ProcessDefinition** — lifecycle definition (Create, Update) via Fragments
 - **Slot** — state field within a type definition
+
+When editing an existing document, preserve unknown XML, declaration order, IDs,
+node widths, and established geometry unless the requested change requires them to
+move. XML validity alone does not prove that a node surface, pin order, or layout is
+correct.
+
+This skill includes its reusable Python editor and matching MCP/CLI adapters.
+On first use with no successful collection-wide upstream check in seven days,
+follow the [shared maintenance policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
+Compare upstream selectively; never overwrite project-owned extensions. Contribute
+verified generic findings with versions/reproduction and publishing authorization;
+keep renderer-specific facts in the owning project. Installed copies update only
+through their authorized installation/update workflow.
 
 ## XML Root and Namespaces
 
@@ -43,9 +55,9 @@ Root attributes: `Id` (base62 GUID), `LanguageVersion` (e.g. `"2024.6.0"`), `Ver
 
 ## ID System
 
-Every element has a unique `Id` — a **22-character base62-encoded GUID** using `[0-9A-Za-z]`. All IDs must be unique within the document. Generate via `GUIDEncoders.GuidTobase62(Guid.NewGuid())`.
+Every element has a unique `Id` — a **22-character VL-encoded GUID** using `[0-9A-Za-z]`. All IDs must be unique within the document. Generate via `GUIDEncoders.GuidTobase62(Guid.NewGuid())` or the manipulator's `new_vl_id()`. VL's encoding is not ordinary base62 of one 128-bit integer: it uses the alphabet `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789`, `Guid.ToByteArray()` byte order, and two independently encoded 64-bit halves of 11 characters each. The source is `VL.Lang/src/ImmutableModel/Internal/GUIDEncoders.cs` in a matching vvvv source checkout; do not invent an ID codec from the 22-character shape alone.
 
-Link `Ids` attribute: comma-separated `"sourceId,sinkId"` (output first, input second).
+Link `Ids` is a comma-separated sequence of two or more data-hub IDs. VL's `Link.SourceId` is the first and `SinkId` is the last; intervening IDs are valid routing data hubs, not extra or malformed links. An empty or one-ended `<Link>` can be written by an unfinished editor drag; `vlpatch validate` rejects it. Use the manipulator's explicit `apply --remove-incomplete-links --connect SOURCE_ID TARGET_ID` only after verifying the intended endpoints; never infer a missing endpoint from proximity. Never discard a three-ID link merely because it is not a pair. Reopen the patch in vvvv to verify that each new ProcessNode's output actually reaches the renderer group: XML parse success alone does not establish an active contribution.
 
 ## Element Hierarchy
 
@@ -99,10 +111,17 @@ The `<p:NodeReference>` property defines what a Node IS. It contains `<Choice>` 
 - Second Choice: `ProcessAppFlag` (stateful) or `OperationCallFlag` (stateless)
 
 Custom Process/node registration names use PascalCase without spaces. Preserve
-actual stock/imported names. A local rename must update both its definition and
-matching call selectors, not just an instance label. Public registrations need
-[compatible aliases](../vvvv-custom-nodes/advanced.md#compatible-processnode-renames)
-so existing saved references still resolve.
+actual stock/imported names. Use `rename_local_process` for a local helper so its
+definition and matching call selectors change together; a display label alone
+does not rename a registered node. See [semantic edits](programmatic-editing.md#local-process-helpers-all-authoring-surfaces).
+
+`LastCategoryFullName`/`LastDependency` are last-seen editor hints, not a complete
+overload selector. Preserve the actual saved Choices, CategoryReference and any
+PinReference selectors from a working call. Adaptive and explicit-overload calls
+are different contracts; do not indiscriminately add/remove `Fixed`. For scalar
+Cons versus sequence Concat, Spread-to-memory adaptive calls and the separate
+MutableArray overload, read
+[collection dimensions and adaptive conversions](programmatic-editing.md#collection-dimensions-and-adaptive-conversion-calls).
 
 ### Type Definitions
 
@@ -171,11 +190,14 @@ Note the lowercase `i` in `isIOBox`. Common types: `Boolean`, `Int32`, `Float32`
      Value="Title text here">
   <p:TypeAnnotation><Choice Kind="TypeFlag" Name="String" /></p:TypeAnnotation>
   <p:ValueBoxSettings>
-    <p:fontsize p:Type="Int32">14</p:fontsize>
+    <p:fontsize p:Type="Int32">9</p:fontsize>
     <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
   </p:ValueBoxSettings>
 </Pad>
 ```
+
+A visible heading uses the same structure with `fontsize` 15. A clickable URL
+uses the same String Pad with `stringtype` set to `Link`.
 
 ## Link Element
 
@@ -183,10 +205,7 @@ Note the lowercase `i` in `isIOBox`. Common types: `Boolean`, `Int32`, `Float32`
 <Link Id="..." Ids="outputPinId,inputPinId" />
 ```
 
-`Ids` lists the source first and sink last; saved links may have intermediate routing
-hubs. `IsHidden="true"` is used for reference links. Do not add `IsFeedback="true"`
-to an ordinary cycle and assume it creates stored state: use an actual state
-boundary and verify its read/write semantics. See [local access](local-access.md).
+`Ids` format: `"sourceId,sinkId"` or `"sourceId,intermediateHubId,sinkId"` (and longer routes) — source first, sink last. Use `IsHidden="true"` for reference links. `IsFeedback="true"` is not a delay for arbitrary node links: the inspected compiler skips that link's assignment; it does not create stored state. First check the actual camera/input contract. If the renderer already associates window input with its connected camera, no backward link or Slot is needed. For cameras requiring explicit window-input feedback, copy a verified Slot pattern: one Slot on the Process's inner Patch, separate read/write pads sharing its SlotId, and ordinary links. The read pad feeds the camera; the window feeds the write pad. Do not close a direct camera/window cycle and merely label it feedback.
 
 ## ProcessDefinition and Fragments
 
@@ -204,12 +223,14 @@ boundary and verify its read/write semantics. See [local access](local-access.md
 
 Fragment `Patch` attribute references a sibling `<Patch>` element's `Id`.
 
-A Process Application needs enabled Create and Update fragments targeting real
-sibling patches. A visible Application canvas alone does not prove that its
-dataflow executes. Process calls also need the target's real lifecycle/signature
-metadata; valid XML cannot prove node resolution or inferred types.
+For an `Application` whose container is `Process`, this lifecycle block is
+mandatory, even when Create and Update are empty. A Group canvas by itself is
+only displayable XML: vvvv can open it and draw every node and link, but it has
+no execution entry point, so the whole dataflow remains grey and never runs.
+Validators and generators must require both named sibling patches plus enabled
+fragments targeting both of them.
 
-## Regions
+## Control-flow Regions
 
 Regions use 4-value Bounds (`"X,Y,W,H"`) and have ControlPoints at borders:
 
@@ -232,6 +253,17 @@ Regions use 4-value Bounds (`"X,Y,W,H"`) and have ControlPoints at borders:
 
 Region patch names: If uses `Then`/`Else`, ForEach uses `Create`/`Update`/`Dispose`, Cache uses `Create`/`Update`.
 
+`ControlPoint` is a bidirectional region portal, not a conventional input pin.
+Links legitimately target it outside a region and source from it inside (or the
+reverse for region outputs). For CPU instancer transforms, use the bundled
+`PatchSession.add_matrix_repeat_builder(...)`: it creates the canonical
+Cache/Repeat/MutableArray structure, uses one count for allocation and iteration,
+and returns a stable `ReadOnlyMemory<Matrix>` endpoint.
+Its position input is a Vector2 spread relayed into Repeat's `XyZ.Input`, not
+a direct TransformSRT translation. Its scalar Y and scaling endpoints are
+separate. Keep the explicit `MutableArray<T> -> ReadOnlyMemory<T>` overload
+references; structural XML validation alone cannot prove vvvv type resolution.
+
 ## TypeAnnotation
 
 ```xml
@@ -252,6 +284,17 @@ Region patch names: If uses `Then`/`Else`, ForEach uses `Create`/`Update`/`Dispo
 ```
 
 ## Slot Element (State Fields)
+
+For shared resources, multiple accessor Pads can read one named Slot locally.
+Slots are real state: initialization, read/write compiler ordering and resource
+lifetime still matter. They are not guaranteed one-frame delays by placement.
+Use `PatchSession.add_slot_read(...)` instead of duplicating resource producers.
+
+Within a local Process, repeat a placement of the same input using
+`PatchSession.add_input_placement(...)`. It creates a fresh ControlPoint with a
+hidden reference link to the existing signature Pin, not another parameter or an
+invented `DefinitionId`. Keep the read beside its consumer and related creative
+controls together. See [programmatic-editing.md](programmatic-editing.md).
 
 ```xml
 <Slot Id="..." Name="MyField">
@@ -298,42 +341,41 @@ Region patch names: If uses `Then`/`Else`, ForEach uses `Create`/`Update`/`Dispo
 2. `xmlns:p="property"` must be on `Document`
 3. `Version="0.128"` always required
 4. Fragment `Patch` must reference existing sibling Patch IDs
-5. Link `Ids`: at least source and sink, output first; preserve intermediate hubs
+5. Link `Ids`: at least two non-empty data-hub IDs — source first, sink last; preserve intermediate hubs
 6. `CanvasType="FullCategory"` only for root canvas
 7. Every document needs `VL.CoreLib` dependency
-8. Application node is the entry point (Name="Application", ContainerDefinition)
+8. Application node is the entry point (Name="Application", ContainerDefinition), and a Process Application must have Create + Update sibling patches and enabled ProcessDefinition fragments for both
 9. Element names are case-sensitive (`Patch` not `patch`)
 10. `isIOBox` uses lowercase `i`
 11. Dependencies are children of `Document`, not `Patch`
+12. Repository-owned text is UTF-8 without a byte-order mark
+13. Public pins and their order come from a live/reflected catalog or production signature, never invention
+14. Visible help prose uses String Pad annotations; XML comments are not canvas help
+15. Link endpoint types must be compatible. In the verified gamma version, `Integer32` and `Integer32 (Unsigned)` are not implicitly interchangeable: a refused link passes no value. A typed IOBox may need its TypeAnnotation corrected to the real consumer contract, not a new Link representation. Shader factories determine pin types from their actual reflection rules; compare the shader signature and live node metadata. When a pin type changes, migrate affected IOBoxes/consumers together. The editor's [link-type diagnostic](programmatic-editing.md#minimum-diagnostics) checks only catalog-known endpoint types and remains silent when the real signature is unavailable.
 
 ## Common Mistakes
 
 - Forgetting `xmlns:p="property"` namespace declaration
 - Putting dependencies inside `Patch` instead of `Document`
 - Reversed Link direction (first ID must be source/output)
-- Missing ProcessDefinition for process/class type definitions
+- Treating a visible Application Group canvas as executable while omitting its Create/Update patches or enabled ProcessDefinition fragments
 - Wrong Bounds format (use commas, no spaces: `"100,200,65,19"`)
 - Using `IsIOBox` instead of `isIOBox`
+- Treating node centres as pin positions
+- Sorting pins alphabetically or placing the main output after diagnostic outputs
+- Running a whole-document layout over an already hand-arranged patch
+- Using a control-flow region when a visual `Overlay` was intended, or vice versa
+- Writing a visible comment as an XML `<!-- comment -->`
+- Treating `GridSpread (2D)` Width as the distance between the outer cell centres. With centred alignment, `Center` is the grid midpoint and cell-centre spacing is `Width / Count` on each axis. To align a 3-by-2 grid with positions x = -1.6, 0, 1.6 and z = 0, -2.5, use Center = (0, -1.25), Width = (4.8, 5.0), Count = (3, 2). Verify against the rendered patch, not just XML links.
 
 For the complete element reference with all attributes, Choice kinds, and serialization details, see [format-reference.md](format-reference.md).
-For layout conventions, spacing, positioning, and visual organization best practices, see [best-practices.md](best-practices.md).
-For repeated input placements, shared Slot reads, scoped geometry and safe helper
-construction, see [local-access.md](local-access.md).
+For layout, exact pin anchors, node sizing, and human-preserving edit rules, read [best-practices.md](best-practices.md) before changing coordinates.
 
-## Keep this knowledge growing
-
-Leave the next patcher one fewer mystery. On first use of any skill in this
-collection with no successful check in seven days, compare the source with
-[tebjan/vvvv-skills](https://github.com/tebjan/vvvv-skills). If no record exists, check once.
-Share one local check timestamp/revision across these skills; do not poll per invocation.
-Preserve local extensions and pinned project versions; checking is not permission
-to install updates. If offline, record the deferred check and continue the task.
-
-When actual work exposes a gap, capture the tested vvvv/package versions, a
-minimal reproduction or authoritative source, and the observed result. Treat
-other users' reports as leads, not facts until verified. Improve the smallest
-relevant instruction; do not turn one example into a universal rule. Redact
-private data and obtain publishing authorization before submitting upstream.
-See the [contribution policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
-Merged improvements reach users through their installer/update workflow, not
-through a local edit or an automatic overwrite of everyone's skills.
+For documents with local Process definitions, inspect geometry per attached
+Canvas using `layout_analysis(canvas=...)` and `render_svg(..., canvas=...)`.
+Independent helper coordinates must not be treated as one global canvas.
+Repeated input placements and Slot pads retain two-coordinate Bounds when moved;
+their labels must be included in collision review. See
+[programmatic-editing.md](programmatic-editing.md#inspect-one-actual-canvas-at-a-time).
+For help-patch taxonomy, visible annotations, overlays, Help Browser manifests, adjacent assets, and verification, read [help-patch-authoring.md](help-patch-authoring.md).
+For loss-preserving automated editing and the repository's persistent patch manipulator, read [programmatic-editing.md](programmatic-editing.md). Python `edit_batch`, MCP `vl_edit` and CLI `vlpatch edit` share one discoverable semantic contract. Use `vl_capabilities` / `vlpatch capabilities` for current arguments and `vl_canvases` for scope IDs; new authoring APIs must be exposed and parity-tested across all three surfaces in the same change. An already-running MCP process needs restart/reconnection to load added tools. File-only validation is not live vvvv compilation.

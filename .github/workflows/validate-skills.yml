@@ -77,3 +77,19 @@ jobs:
 
           echo ""
           echo "All skills validated successfully."
+
+  patch-editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: skills/vvvv-fileformat/scripts/vl-patch-manipulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.12'
+      - name: Install locked editor and MCP/test dependencies
+        run: uv sync --frozen --extra server --group test
+      - name: Verify standalone editor and Python/MCP/CLI parity
+        run: uv run --frozen --extra server pytest -q
