@@ -26,7 +26,9 @@ vvvv is a live programming environment — programs run continuously while you b
 ## Execution Model
 
 - **Frame-based evaluation** — the mainloop evaluates the entire graph every frame (~60 FPS)
-- **Data flows left-to-right, top-to-bottom** through links between nodes
+- **Graph dependencies determine evaluation order** — canvas coordinates do not
+- **Visual dataflow within a subgraph is top-to-bottom** — sources above consumers
+- **Sibling subgraphs read left-to-right** beside each other on the two-dimensional canvas
 - **Process nodes** maintain state between frames (constructor → Update loop → Dispose)
 - **Operation nodes** are pure functions evaluated each frame
 - vvvv evaluates all connected nodes, skips disconnected subgraphs

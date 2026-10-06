@@ -385,16 +385,18 @@ public ReadOnlySpan<ParticleState> Update(
 }
 ```
 
-## Rising Edge Detection (Bang/Trigger)
+## Bang Detection
 
-For boolean inputs that should trigger once (not every frame they're true):
+Use vvvv's term **bang** in pin help text and node documentation. A bang is a
+one-frame `true` pulse. For a trigger that may stay true, produce a bang once
+when it changes from false to true:
 
 ```csharp
 private bool _lastTrigger;
 
 public void Update(out bool triggered, bool trigger = false)
 {
-    triggered = trigger && !_lastTrigger; // Rising edge only
+    triggered = trigger && !_lastTrigger; // bang: false -> true, this frame only
     _lastTrigger = trigger;
 }
 ```

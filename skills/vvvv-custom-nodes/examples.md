@@ -11,7 +11,7 @@ Real-world examples from production vvvv gamma projects.
 - [Generic Utility Node](#generic-utility-node)
 - [Compute Dispatcher with Shader Hot-Reload](#compute-dispatcher-with-shader-hot-reload)
 - [Return-Based Output with Field-by-Field Change Detection](#return-based-output-with-field-by-field-change-detection)
-- [Rising Edge Trigger (Bang Detection)](#rising-edge-trigger-bang-detection)
+- [Bang Detection](#bang-detection)
 - [VL.Fuse Shader Graph Node](#vlfuse-shader-graph-node)
 
 ## Config Builder with Hash-Based Change Detection
@@ -312,24 +312,25 @@ public class Noise
 }
 ```
 
-## Rising Edge Trigger (Bang Detection)
+## Bang Detection
 
-For boolean inputs that should fire once on the false-to-true transition:
+Use **bang** in vvvv-facing help text. For a held boolean trigger, send one bang
+when it changes from false to true:
 
 ```csharp
-[ProcessNode(Name = "RisingEdge", Category = "Animation.Triggers")]
-public class RisingEdge
+[ProcessNode(Category = "Animation.Triggers")]
+public class BangTrigger
 {
     private bool _lastPulse;
 
     /// <summary>
-    /// Sends a one-shot pulse when the trigger goes from false to true.
+    /// Sends one bang when the trigger goes from false to true.
     /// </summary>
     public void Update(
         string triggerName = "default",
         bool pulse = false)
     {
-        if (pulse && !_lastPulse) // Rising edge: false → true
+        if (pulse && !_lastPulse) // bang: false -> true
         {
             TriggerRegistry.Pulse(triggerName);
         }

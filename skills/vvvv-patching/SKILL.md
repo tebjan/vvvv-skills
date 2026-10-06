@@ -32,6 +32,9 @@ As a rule: **patch the data flow, code the algorithms**.
 
 ## Regions
 
+Executable control-flow regions have evaluation semantics. A visual help-patch
+frame is an XML `Overlay`; it groups the presentation without controlling execution.
+
 Regions are visual constructs that control execution flow:
 
 | Region | Purpose | C# Equivalent |
@@ -84,6 +87,12 @@ wiring; see [animation patterns](patterns.md#animationinterpolation-pattern).
 
 ### Local access and human-readable groups
 
+Keep shared setup and the common sink/render spine outside technique-specific
+visual frames. Where a renderer Group accepts nested Groups, a showcase can
+collect demonstration peers in one Group and combine it with basic scene content
+in a second Group near the renderer. This is an optional readability convention;
+check the Group's supported input type and traversal behavior.
+
 Keep each demonstration's controls, feature nodes and result together. Place reads
 of a shared input beside their consumers, including inside helpers: multiple canvas
 placements may refer to the same signature parameter without adding extra inputs.
@@ -114,8 +123,9 @@ Report residual shared-fanout/collection crossings honestly, without reordering
 pins or changing links merely to improve a geometric metric.
 
 For an explicitly independent renderer peer collection, source-X order can
-reduce crossings at its Group. Collection slots also determine execution order:
-preserve producer-before-consumer GPU stages and never sort all Groups globally.
+reduce crossings at its Group. In implementations that traverse children
+sequentially, collection slots also determine execution order: preserve
+producer-before-consumer GPU stages and never sort all Groups globally.
 Keep hero/demo renderers and utility geometry visually distinct where this
 clarifies the feature; keep each demo's controls and local helper inputs nearby.
 For the XML contracts behind local placements and Slots, see
