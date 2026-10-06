@@ -67,7 +67,7 @@ public class MyTransform : IDisposable
 
 ### Non-Negotiable Rules
 
-1. **`[ProcessNode]` attribute** on every stateful node class
+1. **`[ProcessNode]` metadata** on every stateful node class; use a supported `ProcessNodeFactory` when compatibility requires aliases
 2. **No "Node" in the vvvv-visible name** — everything in vvvv is already a node, so "Node" suffix is redundant
 3. **`out` parameters FIRST**, value inputs with defaults AFTER
 4. **XML comments** on class and Update method (shown as tooltip in vvvv)
@@ -96,6 +96,13 @@ Implications for node authors:
 ### Class Naming vs Node Name
 
 The rule is: **users must never see "Node" in vvvv's node browser**. How you achieve this:
+
+Custom registration names use PascalCase without spaces, not just a renamed
+instance label. Preserve stock/imported names and readable pin labels. For public
+renames, preserve compatibility through [aliases](advanced.md#compatible-processnode-renames)
+unless the owner explicitly requests a breaking migration without legacy code.
+In that case migrate owned selectors and authoring catalogs/tests before removing
+aliases; document that external saved patches must migrate too.
 
 ```csharp
 // Simple: class name IS the node name — no suffix needed
@@ -180,11 +187,20 @@ For defaults that cannot be C# literal expressions:
 
 ```csharp
 public void Update(
-    [DefaultValue(typeof(Color4), "0.1, 0.1, 0.15, 1.0")] Color4 clearColor,
+    [DefaultValue(typeof(Color4), "R:0.1 G:0.1 B:0.15 A:1")] Color4 clearColor,
+    [DefaultValue(typeof(Vector3), "X:0 Y:3 Z:0")] Vector3 position,
     [DefaultValue(typeof(Int2), "1920, 1080")] Int2 size,
     bool clear = true)
 { }
 ```
+
+In Stride 4.2.1, `Color4Converter` and `Vector3Converter` parse named floating
+components: `R:... G:... B:... A:...` and `X:... Y:... Z:...`, respectively.
+Vector field names are case-sensitive. Comma lists are invalid for these types;
+`DefaultValueAttribute` can swallow conversion errors and leave `Value` null,
+silently importing black/zero defaults. Verify the actual loaded attribute's
+`Value` against the intended struct, not just its source string. Other types use
+their own registered converter; do not generalize this grammar to every struct.
 
 ## Attributes — when you actually need them
 
@@ -369,16 +385,18 @@ public ReadOnlySpan<ParticleState> Update(
 }
 ```
 
-## Rising Edge Detection (Bang/Trigger)
+## Bang Detection
 
-For boolean inputs that should trigger once (not every frame they're true):
+Use vvvv's term **bang** in pin help text and node documentation. A bang is a
+one-frame `true` pulse. For a trigger that may stay true, produce a bang once
+when it changes from false to true:
 
 ```csharp
 private bool _lastTrigger;
 
 public void Update(out bool triggered, bool trigger = false)
 {
-    triggered = trigger && !_lastTrigger; // Rising edge only
+    triggered = trigger && !_lastTrigger; // bang: false -> true, this frame only
     _lastTrigger = trigger;
 }
 ```
@@ -424,3 +442,21 @@ For service consumption (IFrameClock, Game, Logging), see [services.md](services
 For working with public channels from C# nodes, see vvvv-channels.
 For code examples, see [examples.md](examples.md).
 For starter templates, see [templates/](templates/).
+
+## Keep this knowledge growing
+
+Leave the next patcher one fewer mystery. On first use of any skill in this
+collection with no successful check in seven days, compare the source with
+[tebjan/vvvv-skills](https://github.com/tebjan/vvvv-skills). If no record exists, check once.
+Share one local check timestamp/revision across these skills; do not poll per invocation.
+Preserve local extensions and pinned project versions; checking is not permission
+to install updates. If offline, record the deferred check and continue the task.
+
+When actual work exposes a gap, capture the tested vvvv/package versions, a
+minimal reproduction or authoritative source, and the observed result. Treat
+other users' reports as leads, not facts until verified. Improve the smallest
+relevant instruction; do not turn one example into a universal rule. Redact
+private data and obtain publishing authorization before submitting upstream.
+See the [contribution policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
+Merged improvements reach users through their installer/update workflow, not
+through a local edit or an automatic overwrite of everyone's skills.

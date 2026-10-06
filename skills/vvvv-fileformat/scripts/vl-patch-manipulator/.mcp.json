@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "vvvv-patch-tools": {
+      "type": "stdio",
+      "command": "uv",
+      "cwd": ".",
+      "args": ["run", "--extra", "server", "vlpatch-server"]
+    }
+  }
+}

@@ -259,11 +259,16 @@ Children: `<p:TypeAnnotation>`, `<p:ValueBoxSettings>`.
 | Attribute | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `Id` | Yes | — | Unique ID |
-| `Ids` | Yes | — | `"sourceId,sinkId"` (output→input) |
+| `Ids` | Yes | — | Two or more comma-separated data-hub IDs; first is source, last is sink, intervening IDs are routing hubs |
 | `IsHidden` | No | `false` | Reference link (not drawn) |
-| `IsFeedback` | No | `false` | Feedback link (bottom-to-top) |
+| `IsFeedback` | No | `false` | Compiler feedback marker; not an automatic frame delay for arbitrary node links |
 
-Links connect Pin, Pad, and ControlPoint IDs.
+Links connect Pin, Pad, and ControlPoint IDs. VL's `Link.SourceId` and `SinkId`
+read the first and last IDs, while `DataHubs` includes every ID in the sequence.
+A three-ID link is valid and must not be removed as an unfinished editor drag.
+For previous-frame window input, use a Slot with separate read/write accessor
+pads sharing SlotId and ordinary links. Merely marking a direct camera/window
+cycle as IsFeedback does not create stored state and can leave execution cyclic.
 
 ---
 
@@ -300,6 +305,30 @@ Children: `<p:TypeAnnotation>`, `<p:Value>`, `<p:Summary>`, `<p:Remarks>`.
 ---
 
 ## ControlPoint Element
+
+### Multiple placements of one Process input
+
+The Update signature declares one InputPin. Each canvas placement is a separate
+ControlPoint linked to that same declaration by an `IsHidden="true"` reference
+link on the owning Process Patch:
+
+```xml
+<Canvas Id="..." CanvasType="Group">
+  <ControlPoint Id="placementA" Bounds="100,80" />
+  <ControlPoint Id="placementB" Bounds="620,180" />
+</Canvas>
+<Patch Id="..." Name="Update">
+  <Pin Id="signatureFont" Name="Font" Kind="InputPin" />
+</Patch>
+<Link Id="..." Ids="signatureFont,placementA" IsHidden="true" />
+<Link Id="..." Ids="signatureFont,placementB" IsHidden="true" />
+```
+
+Symbolic IDs above illustrate relationships; generate real VL-encoded IDs when
+authoring. Both placements carry the same parameter, not separate public inputs.
+No `DefinitionId` attribute is used. Ordinary visible links run from these
+placements to their local consumers. Verify region portals separately; do not
+infer a Process signature selector from border geometry.
 
 | Attribute | Required | Description |
 |-----------|----------|-------------|

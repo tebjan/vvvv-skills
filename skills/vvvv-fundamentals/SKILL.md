@@ -26,7 +26,9 @@ vvvv is a live programming environment — programs run continuously while you b
 ## Execution Model
 
 - **Frame-based evaluation** — the mainloop evaluates the entire graph every frame (~60 FPS)
-- **Data flows left-to-right, top-to-bottom** through links between nodes
+- **Graph dependencies determine evaluation order** — canvas coordinates do not
+- **Visual dataflow within a subgraph is top-to-bottom** — sources above consumers
+- **Sibling subgraphs read left-to-right** beside each other on the two-dimensional canvas
 - **Process nodes** maintain state between frames (constructor → Update loop → Dispose)
 - **Operation nodes** are pure functions evaluated each frame
 - vvvv evaluates all connected nodes, skips disconnected subgraphs
@@ -159,3 +161,21 @@ nodeContext.AppHost.Services.RegisterService(myService);
 ```
 
 For detailed reference, see [reference.md](reference.md).
+
+## Keep this knowledge growing
+
+Leave the next patcher one fewer mystery. On first use of any skill in this
+collection with no successful check in seven days, compare the source with
+[tebjan/vvvv-skills](https://github.com/tebjan/vvvv-skills). If no record exists, check once.
+Share one local check timestamp/revision across these skills; do not poll per invocation.
+Preserve local extensions and pinned project versions; checking is not permission
+to install updates. If offline, record the deferred check and continue the task.
+
+When actual work exposes a gap, capture the tested vvvv/package versions, a
+minimal reproduction or authoritative source, and the observed result. Treat
+other users' reports as leads, not facts until verified. Improve the smallest
+relevant instruction; do not turn one example into a universal rule. Redact
+private data and obtain publishing authorization before submitting upstream.
+See the [contribution policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
+Merged improvements reach users through their installer/update workflow, not
+through a local edit or an automatic overwrite of everyone's skills.

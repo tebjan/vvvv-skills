@@ -49,13 +49,33 @@ Each skill folder (e.g. `vvvv-fundamentals/`, `vvvv-shaders/`) must be placed di
 | `vvvv-node-libraries` | Library project setup — AssemblyInitializer, service registration, ImportAsIs config, node factories — plus contributing PRs to existing libraries (editable packages, the .vl diff problem) |
 | `vvvv-channels` | Public channels — IChannelHub, [CanBePublished], hierarchical propagation, subscriptions, bang channels |
 | `vvvv-editor-extensions` | Editor plugins — .HDE.vl naming, Command nodes, SkiaWindow types, docking, Session API |
-| `vvvv-fileformat` | VL file format (.vl) — XML structure, element hierarchy, IDs, NodeReference/Choice patterns, programmatic generation |
+| `vvvv-fileformat` | VL XML, human-preserving layout, help authoring, and a bundled persistent Python/MCP/CLI patch editor |
 | `vvvv-troubleshooting` | Error diagnosis — C# node issues, shader compilation failures, runtime problems |
 | `vvvv-startup` | Launching vvvv gamma — CLI arguments, package repositories, filesystem paths, installation detection |
 | `vvvv-debugging` | Debugger setup — VS Code launch.json generation, attach to process, Visual Studio profiles, multiple test scenarios |
 | `vvvv-testing` | Automated testing — VL.TestFramework with NUnit, test patches with assertion nodes, agent-driven test workflows, CI integration |
 
 ## How It Works
+
+### Patch authoring tools included
+
+The `vvvv-fileformat` skill ships the complete editor under
+`skills/vvvv-fileformat/scripts/vl-patch-manipulator`. It includes exact VL IDs,
+typed graph edits, Process/loop/Slot builders, local input placements, spatial
+inspection and scoped SVG previews, revision-checked saves and external-edit
+feedback. Python, CLI and MCP share one operation registry and parity tests.
+
+```powershell
+cd skills/vvvv-fileformat/scripts/vl-patch-manipulator
+uv sync --extra server --group test
+uv run vlpatch --help
+uv run --extra server vlpatch-server
+```
+
+See the skill's [editing contract](skills/vvvv-fileformat/programmatic-editing.md)
+and [help authoring guide](skills/vvvv-fileformat/help-patch-authoring.md).
+No private rendering-engine checkout is required. Catalogs are optional runtime
+inputs; offline XML checks are not a substitute for live vvvv compilation.
 
 Once installed, skills activate automatically when the AI agent detects relevant context in your vvvv gamma project. The agent uses each skill's `description` field to decide when to load it — no manual invocation needed.
 
@@ -80,6 +100,12 @@ When the project uses source project references (.csproj), vvvv's live compilati
 No build step is needed for source project references — vvvv handles compilation internally. For projects using pre-compiled DLLs, the agent runs `dotnet build` and the user restarts vvvv. Either way, small modular nodes (each a single C# class) compose into complex systems through visual patching, making it practical to build and iterate on individual pieces with an AI agent.
 
 ## Contributing
+
+Help the next patcher avoid a rediscovery: follow the [contribution and weekly
+freshness policy](CONTRIBUTING.md). Share minimal, reproducible findings with their
+tested versions; reports and guesses are not yet facts. Merged improvements are
+distributed through users' authorized installation/update workflows, not by
+silently overwriting local skills or project-specific extensions.
 
 ### Adding a New Skill
 

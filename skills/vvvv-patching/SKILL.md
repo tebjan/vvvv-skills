@@ -12,7 +12,7 @@ metadata:
 
 ## Dataflow Basics
 
-- **Left-to-right, top-to-bottom** execution order
+- **Top-to-bottom dependency flow** within a subgraph; peer subgraphs read left-to-right on the 2D canvas. Position does not determine execution order.
 - **Links** carry data between pads (input/output connection points)
 - **Spreading** — connecting a `Spread<T>` to a single-value input auto-iterates the node
 - Every frame, the entire connected graph evaluates; disconnected subgraphs are skipped
@@ -31,6 +31,9 @@ Both visual patches and C# source projects operate in a live environment — edi
 As a rule: **patch the data flow, code the algorithms**.
 
 ## Regions
+
+Executable control-flow regions have evaluation semantics. A visual help-patch
+frame is an XML `Overlay`; it groups the presentation without controlling execution.
 
 Regions are visual constructs that control execution flow:
 
@@ -64,18 +67,69 @@ Channels provide two-way data binding:
 - **FrameDelay** — delays a value by one frame (breaks circular dependencies)
 - Use `Changed` node to detect when a value changes between frames
 
+For repeating time-based animation, use native `LFO`, `GetSlice` and `CosineWave`
+wiring; see [animation patterns](patterns.md#animationinterpolation-pattern).
+
 ## Patch Organization
 
 ### Naming Conventions
 - Use PascalCase for patch names and node names
 - Group related operations under a common category
 - Use descriptive names that indicate the operation (verb + noun)
+- Custom Process and node registration names have no spaces. Preserve actual
+  stock/imported names, pin labels and prose; synchronize definitions and calls.
 
 ### Structure
 - Keep patches focused — one purpose per patch
 - Extract reusable logic into sub-patches
 - Use **IOBox** nodes for exposing parameters
 - Add **Pad** nodes to create input/output pins on the patch boundary
+
+### Local access and human-readable groups
+
+Keep shared setup and the common sink/render spine outside technique-specific
+visual frames. Where a renderer Group accepts nested Groups, a showcase can
+collect demonstration peers in one Group and combine it with basic scene content
+in a second Group near the renderer. This is an optional readability convention;
+check the Group's supported input type and traversal behavior.
+
+Keep each demonstration's controls, feature nodes and result together. Place reads
+of a shared input beside their consumers, including inside helpers: multiple canvas
+placements may refer to the same signature parameter without adding extra inputs.
+Named Slots can provide local accesses to shared state, but they are not invisible
+wires: check initialization, read/write ordering, null handling and resource lifetime.
+A reference-valued Slot does not automatically make a frame delay safe.
+
+Extract identical plumbing into a small Process helper, or use a loop when the
+instances genuinely share one topology. Stateful calls require persistent state
+per call or iteration; do not update one mutable renderer repeatedly and collect
+aliases of its output. Keep genuinely different techniques explicit.
+
+Preserve human-authored positions, widths and comments. Lay out new elements
+locally; if room is needed, translate an existing coherent group rigidly rather
+than reflowing the whole patch. Review helper canvases independently of the root.
+Learn from deliberate human edits: order controls by destination pins, stagger
+heights, put shared values above their earliest consumer and leave clear helper
+lanes. Transfer relative geometry to explicitly targeted semantic peers without
+copying values or disturbing the exemplar. Compare geometry and topology
+separately from editor-save metadata; do not infer intent from text diff size.
+If the user explicitly asks to apply this convention throughout one document,
+inventory every executable canvas, including helpers and Application. Implement
+the layout on matching roles, adapt unique subgraphs deliberately and audit each
+canvas independently. A diff study or skill update is not that implementation.
+Preserve the exemplar, already-correct human groups and other documents; prove
+non-geometric XML unchanged and verify a second application does not drift.
+Report residual shared-fanout/collection crossings honestly, without reordering
+pins or changing links merely to improve a geometric metric.
+
+For an explicitly independent renderer peer collection, source-X order can
+reduce crossings at its Group. In implementations that traverse children
+sequentially, collection slots also determine execution order: preserve
+producer-before-consumer GPU stages and never sort all Groups globally.
+Keep hero/demo renderers and utility geometry visually distinct where this
+clarifies the feature; keep each demo's controls and local helper inputs nearby.
+For the XML contracts behind local placements and Slots, see
+[local access](../vvvv-fileformat/local-access.md).
 
 ## Common Anti-Patterns
 
@@ -85,3 +139,21 @@ Channels provide two-way data binding:
 4. **Ignoring Nil** — always handle null/empty collection inputs gracefully
 
 For common patterns reference, see [patterns.md](patterns.md).
+
+## Keep this knowledge growing
+
+Leave the next patcher one fewer mystery. On first use of any skill in this
+collection with no successful check in seven days, compare the source with
+[tebjan/vvvv-skills](https://github.com/tebjan/vvvv-skills). If no record exists, check once.
+Share one local check timestamp/revision across these skills; do not poll per invocation.
+Preserve local extensions and pinned project versions; checking is not permission
+to install updates. If offline, record the deferred check and continue the task.
+
+When actual work exposes a gap, capture the tested vvvv/package versions, a
+minimal reproduction or authoritative source, and the observed result. Treat
+other users' reports as leads, not facts until verified. Improve the smallest
+relevant instruction; do not turn one example into a universal rule. Redact
+private data and obtain publishing authorization before submitting upstream.
+See the [contribution policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
+Merged improvements reach users through their installer/update workflow, not
+through a local edit or an automatic overwrite of everyone's skills.

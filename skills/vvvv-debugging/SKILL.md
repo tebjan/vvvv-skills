@@ -279,6 +279,51 @@ Prefer `dotnet build` unless the project requires MSBuild-specific features or a
 
 ## Common Pitfalls
 
+- **Runtime ticks and document ticks have different owners.** A process-wide SDK
+  may need one tick for the whole runtime, while each document has its own frame
+  clock. Trace the installed runtime's Update/Draw/Present sequence and verify
+  where a callback actually runs; a frame-finished name does not prove an
+  after-Present hook. An individual game system's EndDraw does not prove all
+  systems have finished rendering. Keep shared SDK frame identity consistent
+  across constants, resource tags and markers.
+- **Checkout APIs can differ from the installed public API.** Verify the targeted
+  assembly version, member visibility and actual emitted API before writing a
+  plugin or test harness. An internal runtime method visible in decompiled code
+  is not necessarily callable by a package; use the supported public entry point.
+- **C++/CLI source can emit managed IL.** With `/clr:netcore`, inspect the target
+  method's emission before choosing a debugger. A native source breakpoint can
+  remain unbound for a managed method even when native symbols match. A failed
+  debugger expression evaluation is not proof that the method never ran; inspect
+  accessible managed caller state when mixed-mode evaluation is unavailable.
+- **Native Windows PDBs must match the loaded binary exactly.** Compare the DLL's
+  CodeView RSDS GUID and age with the PDB identity. Matching filenames or adding a
+  symbol directory does not fix an identity mismatch. Check the loaded module
+  path as well as the artifact you built.
+- **Memory counters measure different ownership scopes.** Per-process dedicated
+  GPU usage and adapter-wide usage are different quantities; shared resources
+  and residency can affect attribution. Counter disagreement alone neither
+  proves a leak nor clears unexplained growth. Correlate allocation/disposal
+  lifetimes, GPU fence progress and residency, and keep memory budgets active
+  while investigating.
+
 - **`--package-repositories` + VL.StandardLibs submodule** — If your workspace has a `VL.StandardLibs/` git submodule (common in vvvv contrib repos), `--package-repositories ${workspaceFolder}` will cause vvvv to discover and recompile ALL standard libraries from source. This takes many minutes and is almost never what you want. Either omit `--package-repositories` or point it at a specific subfolder that doesn't contain library submodules.
 - **`--allowmultiple` hiding stale instances** — Without this flag, vvvv refuses to start if another instance is running. This is useful: it tells you there's a stale vvvv process. With `--allowmultiple`, you might accidentally run two instances consuming double resources.
 - **`--debug` slowing everything** — Debug symbol emission significantly slows vvvv's live compilation. Only enable when you actually need breakpoints. For quick iteration (testing UI, checking behavior), omit it.
+
+## Keep this knowledge growing
+
+Leave the next patcher one fewer mystery. On first use of any skill in this
+collection with no successful check in seven days, compare the source with
+[tebjan/vvvv-skills](https://github.com/tebjan/vvvv-skills). If no record exists, check once.
+Share one local check timestamp/revision across these skills; do not poll per invocation.
+Preserve local extensions and pinned project versions; checking is not permission
+to install updates. If offline, record the deferred check and continue the task.
+
+When actual work exposes a gap, capture the tested vvvv/package versions, a
+minimal reproduction or authoritative source, and the observed result. Treat
+other users' reports as leads, not facts until verified. Improve the smallest
+relevant instruction; do not turn one example into a universal rule. Redact
+private data and obtain publishing authorization before submitting upstream.
+See the [contribution policy](https://github.com/tebjan/vvvv-skills/blob/main/CONTRIBUTING.md).
+Merged improvements reach users through their installer/update workflow, not
+through a local edit or an automatic overwrite of everyone's skills.

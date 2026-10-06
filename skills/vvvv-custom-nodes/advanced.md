@@ -3,6 +3,7 @@
 ## Contents
 - FragmentSelection (explicit control over node operations)
 - Smell Attribute (aspects from C#: Advanced / Internal / Hidden / Experimental)
+- Compatible ProcessNode renames (canonical registration and saved selectors)
 - Dynamic Enums (runtime-updating dropdowns)
 - Settings / Split() Pattern (JSON + vvvv pin control)
 - Pin Name Derivation (camelCase to pin names)
@@ -70,6 +71,31 @@ vvvv-node-libraries → *Aspects from C#*.
 
 Real-world reference: `VL.StandardLibs/VL.Skia/src/SkiaRendererNode.cs` (`Internal`) and
 `FormBoundsNotification.cs` (`Experimental`).
+
+## Compatible ProcessNode renames
+
+Verified against VL.Core/VL.Lang 2025.7.1 direct import: saved calls resolve the
+registered name and category, so changing `ProcessNode.Name` can break old files.
+Replace `[ProcessNode]` with `[ProcessNodeFactory(typeof(MyFactory))]`; its
+`GetNodes()` can return canonical and legacy `ProcessNodeFactory.Node` entries
+for the **same CLR class**, sharing constructors, fragments, pins and disposal.
+Do not keep both attributes: `[ProcessNode]` takes precedence and suppresses the factory.
+Keep the legacy name exact and append `.Hidden.Obsolete` to its original category;
+the importer strips these segments into `SymbolSmell` flags while retaining the
+category selector. Preserve `HasStateOutput` on both entries and set factory
+`ImportClass = true` when state is exposed. Keep factory helpers internal.
+Metadata discovery adds no frame work. Test old and new saved selectors in the
+target vvvv; parsing category flags alone does not prove live patch acceptance.
+
+An explicitly requested breaking migration is different: migrate all owned saved
+selectors with the canonical editor, preserve IDs/pins/links/geometry, update
+authoring catalogs and regression tests, then remove the aliases and their
+factories. Ordinary direct ProcessNode attributes may replace a naming-only
+factory while keeping its canonical name/category and HasStateOutput unchanged.
+In the verified importer, direct HasStateOutput also controls imported-class
+visibility; preserve the former factory ImportClass behavior. Inspect deployed
+metadata as well as source. External patches need their own selector migration;
+do not describe a hidden alias as removed while it remains registered.
 
 ## Dynamic Enums
 
