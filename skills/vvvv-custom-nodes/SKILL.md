@@ -30,6 +30,14 @@ What `[ProcessNode]` does NOT do:
 
 ## ProcessNode Pattern — The Core Pattern
 
+Before implementing a node, read a working sibling and reuse its public lifecycle
+and pin pattern. A normal stateful node should expose a compact Update interface;
+keep engine properties and setters in its implementation. Check the actual
+imported process and fragment list, not only the C# signature. A fragmented node
+factory deliberately exposes separate input setters/output getters; use it only
+when those independent operations are needed and accepted. Replacing it with one
+Update also changes when outputs are evaluated, so review scheduling side effects.
+
 The canonical stateful C# node in vvvv gamma:
 
 ```csharp
@@ -192,6 +200,8 @@ public void Update(
 ```
 
 ### DefaultValue for Complex Types
+
+Check the resolved pin defaults, not just declarations: nonliteral attributes must convert to the intended typed value, and authored factories must give matching values to both pin descriptions and runtime input storage. Shared pins on sibling nodes should share defaults from one definition. Treat zero/empty colors, vectors and matrices as intentional only when their meaning is defined; preserve deliberate sentinel values and explicit patch overrides.
 
 For defaults that cannot be C# literal expressions:
 
