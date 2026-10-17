@@ -2,8 +2,8 @@
 name: vvvv-editor-extensions
 description: Helps create vvvv gamma editor extensions — .HDE.vl file naming, Command node registration with keyboard shortcuts, SkiaWindow/SkiaWindowTopMost window types, docking with WindowFactory, and API access to hovered/selected nodes via VL.Lang Session nodes. Use when building editor plugins, custom tooling windows, or automating editor workflows.
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
+  compatibility: Designed for coding AI agents assisting with vvvv gamma development
   author: Tebjan Halm
   version: "1.0"
 ---

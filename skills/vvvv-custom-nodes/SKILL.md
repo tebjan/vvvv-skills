@@ -2,8 +2,8 @@
 name: vvvv-custom-nodes
 description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] lifecycle pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, the public-API import model, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, creating stateless utility methods, or deciding whether a class needs [ProcessNode] at all. Requires the assembly to have one of [assembly: ImportAsIs] / [assembly: ImportNamespace] / [assembly: ImportType] set (see vvvv-node-libraries)."
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
+  compatibility: Designed for coding AI agents assisting with vvvv gamma development
   author: Tebjan Halm
   version: "1.3"
 ---

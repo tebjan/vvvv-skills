@@ -2,8 +2,8 @@
 name: vvvv-patching
 description: Explains vvvv gamma visual programming patterns — dataflow, node connections, regions (ForEach/If/Switch/Repeat/Accumulator), channels for reactive data flow, event handling (Bang/Toggle/FrameDelay/Changed), patch organization, and common anti-patterns (circular dependencies, polling vs reacting, ignoring Nil). Use when the user asks about patching best practices, dataflow patterns, event handling, or how to structure visual programs.
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
+  compatibility: Designed for coding AI agents assisting with vvvv gamma development
   author: Tebjan Halm
   version: "1.0"
 ---
