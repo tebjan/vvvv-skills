@@ -740,6 +740,29 @@ class VlGraph:
         self.refresh()
         return element.get("Id") or ""
 
+    def matching_dependencies(self, location: str, *, kind: str | None = None) -> list[etree._Element]:
+        """Find root dependencies by exact location and optional element kind."""
+        kinds = {"NugetDependency", "DocumentDependency", "PlatformDependency", "ProjectDependency", "NodeFactoryDependency"}
+        if kind is not None and kind not in kinds:
+            raise ValueError(f"unsupported dependency element: {kind}")
+        if not location:
+            raise ValueError("dependency location must be non-empty")
+        return [item for item in self.document.root
+                if isinstance(item.tag, str) and _local_name(item) in kinds
+                and (kind is None or _local_name(item) == kind)
+                and item.get("Location") == location]
+
+    def remove_dependency(self, location: str, *, kind: str | None = None) -> bool:
+        """Remove one exact root dependency; missing is false, ambiguity is an error."""
+        matches = self.matching_dependencies(location, kind=kind)
+        if len(matches) > 1:
+            raise ValueError(f"ambiguous dependency location {location!r}; specify kind or inspect duplicate entries")
+        if not matches:
+            return False
+        self.document.root.remove(matches[0])
+        self.refresh()
+        return True
+
     def add_node(self, node: etree._Element, *, patch: etree._Element | None = None) -> str:
         if _local_name(node) != "Node":
             raise ValueError("add_node expects a Node element")

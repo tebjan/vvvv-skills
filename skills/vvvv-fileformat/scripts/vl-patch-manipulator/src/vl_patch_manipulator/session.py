@@ -919,6 +919,19 @@ class PatchSession:
         self._before_mutation()
         return self.graph.add_dependency(location, version=version, kind=kind, is_forward=is_forward)
 
+    def remove_dependency(self, location: str, *, kind: str | None = None) -> bool:
+        """Remove one root dependency by exact Location and optional element kind.
+
+        Return false when absent; reject ambiguous matches without changing the document.
+        """
+        matches = self.graph.matching_dependencies(location, kind=kind)
+        if len(matches) > 1:
+            raise ValueError(f"ambiguous dependency location {location!r}; specify kind or inspect duplicate entries")
+        if not matches:
+            return False
+        self._before_mutation()
+        return self.graph.remove_dependency(location, kind=kind)
+
     def add_pin(self, node_alias_or_id: str, name: str, kind: str = "InputPin", *, default_value: str | None = None, hidden: bool = False) -> str:
         """Add a dynamic/pin-group pin (for example Group Input 5)."""
 
