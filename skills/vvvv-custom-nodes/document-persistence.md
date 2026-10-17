@@ -1,69 +1,106 @@
-# Persisting a custom node's editor settings in its `.vl` document
+# Persisting runtime state through Create pins
 
-Use this pattern when an editor UI changes settings owned by one placed C# node and
-those settings should survive the node's Dispose/constructor cycle. A runtime
-field alone resets on code reload. Give the constructor a serialized snapshot
-input (for example `string settings = ""`), parse it on Create, and apply later
-UI edits to the live instance immediately. On each meaningful edit, write the
-new snapshot back to that same Create pin through the editor solution API.
+A Create pin can hold the document's durable initial value for a running node.
+The constructor restores that value. When something changes the corresponding
+runtime state, the node can write the new value back to its own Create pin through
+the document model. Normal document Save then preserves it for the next Create.
+This is communication from the running application back to the authored patch,
+independent of ordinary dataflow through links.
 
-The general shape, verified in a vvvv gamma node implementation, is:
+```text
+saved Create-pin value -> constructor -> live state
+          ^                                 |
+          +--------- deliberate writeback <-+ change
+```
+
+The source of a change is independent of this mechanism. Moving or resizing a
+window, manipulating a transform handle, capturing device calibration, an external
+interaction, and editing a model in a custom UI can all produce state that belongs
+with the patch. A settings dialog is one example; an editor UI is not required.
+
+## Choose the persistent value
+
+Store the state needed to recreate the intended behavior. Temporary resources,
+per-frame outputs, caches and measurements need not become document state just
+because they change at runtime. Define which changes should update the saved value.
+
+Use the actual pin type when VL supports saving it: numbers, Booleans, vectors,
+rectangles, matrices and other supported value types do not need conversion to
+strings. A serialized String is useful for a structured object or versioned
+snapshot, but neither strings nor JSON define this pattern. Keep native handles
+and live service references out of the saved representation.
+
+The usual lifecycle is:
+
+1. Declare the persistent value on Create and restore it in the constructor.
+2. Apply a relevant runtime change immediately to the live instance.
+3. Write its updated durable value to the owning Create pin through the solution API.
+4. Normal Save writes the document; the next constructor restores the latest saved value.
+
+## Write to the owning pin
+
+The essential API call is type-independent. This schematic helper assumes
+`_nodeContext` was supplied to the constructor; call it for a relevant state change,
+passing the exact Create-pin label and its supported value type:
 
 ```csharp
-public MyNode(NodeContext nodeContext, string settings = "")
-{
-    _nodeContext = nodeContext;
-    _settings = ParseOrDefault(settings);
-}
+using VL.Lang.PublicAPI;
+using VL.Model;
 
-// Called on a user edit, after updating this instance's runtime state.
-var session = IDevSession.Current;
-if (session != null && !parentStack.IsEmpty)
+void StorePinValue<T>(string pinName, T value)
 {
+    var session = _nodeContext.AppHost.Services
+        .GetService(typeof(IDevSession)) as IDevSession;
+    var ownerStack = _nodeContext.Path.Stack;
+    if (session == null || ownerStack.IsEmpty) return;
+
     session.CurrentSolution
-        .SetPinValue(parentStack, "Settings", Serialize(_settings))
+        .SetPinValue(ownerStack, pinName, value)
         .Confirm(SolutionUpdateKind.DontCompile);
 }
 ```
 
-`parentStack` above must identify the *placed node whose Create pin owns the
-value*. A direct C# ProcessNode can use its `NodeContext.Path.Stack`. When a
-C# instance lives inside a VL wrapper whose Create pin owns the snapshot,
-resolve that wrapper's path instead; one verified service pops the inner node
-stack once for this reason. Check the actual saved document and reload the
-node to establish that the intended pin was updated.
+For example, `StorePinValue("Bounds", bounds)` preserves the rectangle directly;
+`StorePinValue("Transform", transform)` can preserve a supported matrix value.
+For a complex model, a String pin might instead receive a serialized snapshot.
+Visibility is a separate decision: choose Visible, Optional or Hidden for the
+saved Create pin and verify the imported node. A default argument does not hide it.
 
-`"Settings"` is the VL pin label derived from the `settings` constructor
-parameter, not a C# member name. Use the exact pin name in the imported node;
-an explicit `[Pin(Name = ...)]` changes it. The defaulted constructor argument
-is optional, but that alone does not hide the pin. If it is an implementation
-snapshot, choose pin visibility deliberately and verify the imported UI.
+The path must identify the placed node whose pin owns the value. A direct C#
+ProcessNode uses its full `NodeContext.Path.Stack`. If the C# instance is inside a
+VL wrapper and the wrapper's Create pin owns the value, resolve that wrapper's
+path instead. Do not copy a stack-pop operation without checking the owner.
+Use the imported VL label, not the C# field name; parameter camelCase splitting
+and an explicit `[Pin(Name = ...)]` affect that label.
 
-Keep the runtime edit and document edit as separate operations. The runtime
-object gives immediate output; `SetPinValue` returns a new `ISolution`, and
-`Confirm` commits that edit to the editor's current solution. This marks the
-document for normal Save. `DontCompile` avoids a compile
-for this edit; it is not a disk save or an automatic restart. Handle a missing
-editor session or unresolved owner by retaining the current runtime state and
-reporting persistence failure if that matters to the user. Exported apps need
-their own explicitly designed persistence route if persistence is required.
+`SetPinValue` returns a new solution; `Confirm` applies the document change.
+`DontCompile` is the established choice for a saved initial value whose change
+has already been applied to the live instance. It avoids restarting that instance;
+it does not apply arbitrary runtime changes, save to disk, or replace a necessary
+compilation. Other kinds of document edits may need another update mode.
 
-Design the snapshot boundary before implementing it:
+## Ownership, lifetime and verification
 
-- Store one owned snapshot per placed node. An external settings source is
-  read-only input; never overwrite it to persist edits from this node.
-- If one physical Create pin backs multiple runtime instances (for example
-  spreading or a loop), aggregate their states under stable instance keys and
-  update that shared snapshot without discarding siblings.
-- Parse empty, older and malformed payloads safely. Decide how to migrate old
-  schemas and preserve a recoverable value on parse or write failure.
-- Serialize and call the solution API on changes, with bounded/debounced edits
-  when appropriate. Never write the document on every frame.
-- If persistence is asynchronous, order writes so an older completion cannot
-  replace a newer edit. Verify UI edit, runtime output, Dispose/Create reload,
-  document Save/reopen and export behavior separately.
+- Resolve the real owner before writing. A connected input may get its value from
+  another node; define whether edits are read-only, local overrides or explicit
+  upstream writeback. The read-only Settings-dialog contract is one application,
+  not a universal restriction on this mechanism.
+- If multiple runtime instances share one physical Create pin, preserve their
+  states together under appropriate stable instance keys. One write must not
+  discard sibling state. This may require a collection or serialized snapshot.
+- Commit relevant changes, using change detection or coalescing for frequent
+  events. Do not turn every frame into a document edit. Order asynchronous writes
+  so an old completion cannot replace newer state.
+- Retain live state when writeback fails and report the failure as appropriate.
+  Serialized snapshots also need safe defaults, schema migration and parse-error
+  handling. Those concerns do not require every scalar pin to use a serializer.
+- Follow the pinned VL version's editor-thread requirements. A change may come
+  from any subsystem; that does not make solution edits safe on arbitrary threads.
+- Exported apps can restore the saved initial value without an editor session.
+  Persisting subsequent changes in an export requires a separate storage policy.
+- Verify the actual change source, live result, correct pin value, Dispose/Create,
+  and document Save/reopen. Do not equate a serializer test with editor writeback.
+  Define synchronization with document Undo/Redo if that interaction is supported.
 
-The solution API is an editor operation. Follow the pinned VL version's
-`IDevSession`, `ISolution` and threading requirements; the example establishes
-the call shape, not a general guarantee that background threads may edit the
-solution directly. Use the editor's supported dispatch route where required.
+Window bounds and VL.OCIO's serialized color-grading state demonstrate the same
+Create-pin pattern with different value representations and change sources.

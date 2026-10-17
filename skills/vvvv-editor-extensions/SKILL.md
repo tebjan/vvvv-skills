@@ -10,10 +10,10 @@ metadata:
 
 # Editor Extensions
 
-For an editor UI that edits settings owned by a placed C# ProcessNode, use the
-node's Create-pin snapshot and the editor solution writeback pattern in
-[vvvv-custom-nodes/document-persistence.md](../vvvv-custom-nodes/document-persistence.md).
-The UI updates the live node and its owning document on a user change.
+An editor UI is one possible source of persistent runtime changes. The general
+[Create-pin writeback pattern](../vvvv-custom-nodes/document-persistence.md)
+also covers window bounds, interaction results and other changes outside normal
+patch dataflow, using the supported value type rather than requiring a String.
 
 Extensions are standard VL patches saved with a `.HDE.vl` suffix. They run automatically when open in the editor.
 
