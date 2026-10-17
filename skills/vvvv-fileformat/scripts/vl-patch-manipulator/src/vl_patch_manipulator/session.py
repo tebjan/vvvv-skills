@@ -914,9 +914,10 @@ class PatchSession:
         self._reindex_aliases()
         return self.alias_for(identifier)
 
-    def add_dependency(self, location: str, *, version: str | None = None) -> str:
+    def add_dependency(self, location: str, *, version: str | None = None,
+                       kind: str = "NugetDependency", is_forward: bool = False) -> str:
         self._before_mutation()
-        return self.graph.add_dependency(location, version=version)
+        return self.graph.add_dependency(location, version=version, kind=kind, is_forward=is_forward)
 
     def add_pin(self, node_alias_or_id: str, name: str, kind: str = "InputPin", *, default_value: str | None = None, hidden: bool = False) -> str:
         """Add a dynamic/pin-group pin (for example Group Input 5)."""

@@ -723,9 +723,10 @@ class VlGraph:
         return current if current is not None else self._main_patch()
 
     def add_dependency(self, location: str, *, version: str | None = None, kind: str = "NugetDependency", is_forward: bool = False) -> str:
-        if kind not in {"NugetDependency", "DocumentDependency", "PlatformDependency", "ProjectDependency"}:
+        if kind not in {"NugetDependency", "DocumentDependency", "PlatformDependency", "ProjectDependency", "NodeFactoryDependency"}:
             raise ValueError(f"unsupported dependency element: {kind}")
-        existing = next((item for item in self.document.root if _local_name(item) == kind and item.get("Location") == location), None)
+        existing = next((item for item in self.document.root
+                         if isinstance(item.tag, str) and _local_name(item) == kind and item.get("Location") == location), None)
         if existing is not None:
             return existing.get("Id") or ""
         element = etree.Element(kind, Id=new_vl_id(), Location=location)

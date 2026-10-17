@@ -108,6 +108,53 @@ def test_python_and_core_share_builders_scope_results_and_roundtrip(tmp_path: Pa
         core.close()
 
 
+def test_forwarded_node_factory_dependency_mcp_edit_and_roundtrip(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        path = tmp_path / "factory.vl"
+        path.write_bytes(FIXTURE)
+        core = PatchServerCore()
+        mcp = build_mcp_server(core)
+        client_write, server_read = anyio.create_memory_object_stream(10)
+        server_write, client_read = anyio.create_memory_object_stream(10)
+        try:
+            async with anyio.create_task_group() as tasks:
+                tasks.start_soon(mcp._mcp_server.run, server_read, server_write,
+                                 mcp._mcp_server.create_initialization_options())
+                async with ClientSession(client_read, client_write) as client:
+                    await client.initialize()
+                    contract = await client.call_tool("vl_capabilities", {"operations": ["add_dependency"]})
+                    arguments = contract.structuredContent["operations"]["add_dependency"]["arguments"]
+                    assert arguments["kind"]["default"] == "NugetDependency"
+                    assert arguments["is_forward"]["default"] is False
+
+                    opened = await client.call_tool("vl_open", {"path": str(path)})
+                    handle = opened.structuredContent["handle"]
+                    operation = {"op": "add_dependency", "location": "Example.TextureOutputs",
+                                 "kind": "NodeFactoryDependency", "is_forward": True}
+                    edited = await client.call_tool("vl_edit", {
+                        "handle": handle, "expected_revision": 0,
+                        "operations": [{**operation, "as": "first"}, {**operation, "as": "again"}],
+                    })
+                    assert not edited.isError
+                    assert edited.structuredContent["named"]["first"] == edited.structuredContent["named"]["again"]
+                    saved = await client.call_tool("vl_save", {"handle": handle, "expected_revision": 1})
+                    assert not saved.isError
+
+                    reloaded = VlDocument.load(path)
+                    factories = reloaded.root.findall("NodeFactoryDependency")
+                    assert len(factories) == 1
+                    assert factories[0].get("Id") == edited.structuredContent["named"]["first"]
+                    assert factories[0].get("Location") == "Example.TextureOutputs"
+                    assert factories[0].get("IsForward") == "true"
+                    assert len(reloaded.root.findall("NugetDependency")) == 1
+                    assert not path.read_bytes().startswith(b"\xef\xbb\xbf")
+                tasks.cancel_scope.cancel()
+        finally:
+            core.close()
+
+    asyncio.run(scenario())
+
+
 def test_failed_batch_restores_tree_indexes_history_and_revision(tmp_path: Path) -> None:
     path = tmp_path / "fixture.vl"
     path.write_bytes(FIXTURE)
