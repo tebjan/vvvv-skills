@@ -134,3 +134,8 @@ After a live editor save, recheck its canonical pin order and rerun the targeted
 alignment if needed. Reapplying a layout helper should not create nodes or drift
 geometry. Report any justified diagonal links or remaining display limitation
 accurately; do not claim live verification from an XML preview alone.
+
+Before showing a patch, preview and check the exact document variant and Canvas
+that will be opened, including internal proof patches. Keep diagnostic IOBoxes
+next to the stage they describe; checking a different help document does not
+validate the displayed variant.
