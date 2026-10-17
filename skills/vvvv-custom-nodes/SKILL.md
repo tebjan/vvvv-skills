@@ -438,6 +438,7 @@ public static class MathOps
 
 For custom regions (delegate-based, ICustomRegion, IRegion\<TInlay\>), see [regions.md](regions.md).
 For advanced patterns (FragmentSelection, Smell, Dynamic Enums, Settings/Split, Pin Name Derivation), see [advanced.md](advanced.md).
+For editor UI settings that must survive node restart through the owning `.vl` document, see [document-persistence.md](document-persistence.md).
 For service consumption (IFrameClock, Game, Logging), see [services.md](services.md).
 For working with public channels from C# nodes, see vvvv-channels.
 For code examples, see [examples.md](examples.md).
