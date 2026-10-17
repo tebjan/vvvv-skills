@@ -43,7 +43,7 @@ public class MyTransform : IDisposable
     /// Transforms input values with caching.
     /// </summary>
     public void Update(
-        out float result,       // OUT parameters FIRST
+        out float output,       // OUT parameters FIRST
         out string error,       // More out params
         float input = 0f,       // Value inputs with defaults AFTER
         bool reset = false)
@@ -56,7 +56,7 @@ public class MyTransform : IDisposable
             _lastInput = input;
         }
 
-        result = _cachedResult; // ALWAYS output cached data
+        output = _cachedResult; // ALWAYS output cached data
     }
 
     public void Dispose() { /* cleanup */ }
@@ -240,7 +240,24 @@ So `[ProcessNode]` (bare) is the right default for the common case where the cla
 | `PinGroupDefaultCount` | `0` | …a pin group should start with N entries. |
 | `PinGroupEditMode` | `None` | …you want to limit add/remove to one direction only. |
 
-**The return value attribute** (`[return: Pin(...)]`) is only needed when the auto-derived return-value pin needs an override — e.g. a custom name. The default name is fine for nearly all `Update` methods that only have `out` parameters.
+#### Output names: instance state versus method result
+
+- `[ProcessNode(HasStateOutput = true)]` exposes the class instance as **Output**
+  automatically. Do not add a return attribute to name that state pin. If a
+  fragment already defines a non-state Output, the instance pin becomes State Output.
+- `HasStateOutput` defaults to false. An ordinary unannotated mutable-class `Update()` return
+  is a separate **Result**, even if its implementation returns `this`.
+- Static operation returns usually become **Result**. Without an explicit return
+  pin attribute, the importer can derive **Output** when the first input type
+  matches the return type. Inspect the generated surface before overriding it.
+- `out` parameters use their parameter names: `out T output` becomes Output.
+  For an authored node's main method result, use `[return: Pin(Name = "Output")]`
+  only when the generated name would otherwise differ. Secondary outputs keep
+  meaningful names such as Texture and Error. Preserve imported/stock names.
+
+These are importer rules (`ProcessUtils.GetOutputs`, `ImportedSymbol.CreateOutputs`),
+not an instruction to decorate every instance method. For an instance-state output,
+prefer HasStateOutput and a void Update over returning `this` just to expose it.
 
 ### `[DefaultValue]` — parameter (from `System.ComponentModel`)
 
@@ -369,6 +386,7 @@ public class NoiseSteering
 {
     private SteeringConfig? _cached;
 
+    [return: Pin(Name = "Output")]
     public ISteering Update(
         float strength = 2.0f,
         float noiseFrequency = 0.05f,
@@ -386,6 +404,7 @@ public class NoiseSteering
 
 Mix return + `out` when you have one primary output plus additional outputs:
 ```csharp
+[return: Pin(Name = "Output")]
 public ReadOnlySpan<ParticleState> Update(
     SimulationConfig config,
     float deltaTime,
