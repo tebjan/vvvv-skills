@@ -148,6 +148,9 @@ Parameter names are auto-split from camelCase into vvvv pin names:
 
 This matters for `SetPinValue()` calls — the name must match exactly.
 
+For runtime changes written back to typed Create-pin values in the document,
+see [document-persistence.md](document-persistence.md).
+
 ## Node Browser Categories via ImportType
 
 Control where your node appears in the node browser:

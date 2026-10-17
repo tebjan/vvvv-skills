@@ -1,9 +1,9 @@
 ---
 name: vvvv-custom-nodes
-description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] lifecycle pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, the public-API import model, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, creating stateless utility methods, or deciding whether a class needs [ProcessNode] at all. Requires the assembly to have one of [assembly: ImportAsIs] / [assembly: ImportNamespace] / [assembly: ImportType] set (see vvvv-node-libraries)."
+description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] lifecycle pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, the public-API import model, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, persisting runtime state through Create pins, creating stateless utility methods, or deciding whether a class needs [ProcessNode] at all. Requires the assembly to have one of [assembly: ImportAsIs] / [assembly: ImportNamespace] / [assembly: ImportType] set (see vvvv-node-libraries)."
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
+  compatibility: Designed for coding AI agents assisting with vvvv gamma development
   author: Tebjan Halm
   version: "1.3"
 ---
@@ -92,6 +92,16 @@ Implications for node authors:
 - **Dispose must be thorough** — native handles, network connections, and GPU resources must be released. Leaks accumulate across reloads during development.
 - **Constructor must be fast** — it runs each time you save. Defer heavy initialization to the first `Update()` call using a `_needsInit` flag.
 - The rules about caching and change detection above exist partly because of this: your code runs in a program that never stops. Allocations in `Update()` cause GC pressure in a 60 FPS loop that may run for hours.
+
+### State that belongs to the document
+
+A Create pin is the standard boundary for persistent initial state. Restore its
+value in the constructor; when relevant runtime state changes, apply the change
+live and write the updated value back to that pin through the document model.
+This covers window bounds, interaction results, calibration and editable models,
+regardless of which subsystem caused the change. Keep supported VL value types;
+serialization to a String is optional. See [document-persistence.md](document-persistence.md)
+for ownership, typed writeback, update modes and Save/reopen behavior.
 
 ### Class Naming vs Node Name
 
@@ -438,6 +448,7 @@ public static class MathOps
 
 For custom regions (delegate-based, ICustomRegion, IRegion\<TInlay\>), see [regions.md](regions.md).
 For advanced patterns (FragmentSelection, Smell, Dynamic Enums, Settings/Split, Pin Name Derivation), see [advanced.md](advanced.md).
+For runtime state persisted through typed Create-pin values in the owning document, see [document-persistence.md](document-persistence.md).
 For service consumption (IFrameClock, Game, Logging), see [services.md](services.md).
 For working with public channels from C# nodes, see vvvv-channels.
 For code examples, see [examples.md](examples.md).

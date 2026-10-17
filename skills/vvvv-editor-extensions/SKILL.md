@@ -2,13 +2,18 @@
 name: vvvv-editor-extensions
 description: Helps create vvvv gamma editor extensions — .HDE.vl file naming, Command node registration with keyboard shortcuts, SkiaWindow/SkiaWindowTopMost window types, docking with WindowFactory, and API access to hovered/selected nodes via VL.Lang Session nodes. Use when building editor plugins, custom tooling windows, or automating editor workflows.
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
+  compatibility: Designed for coding AI agents assisting with vvvv gamma development
   author: Tebjan Halm
   version: "1.0"
 ---
 
 # Editor Extensions
+
+An editor UI is one possible source of persistent runtime changes. The general
+[Create-pin writeback pattern](../vvvv-custom-nodes/document-persistence.md)
+also covers window bounds, interaction results and other changes outside normal
+patch dataflow, using the supported value type rather than requiring a String.
 
 Extensions are standard VL patches saved with a `.HDE.vl` suffix. They run automatically when open in the editor.
 
