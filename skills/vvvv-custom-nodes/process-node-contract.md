@@ -92,3 +92,9 @@ These are importer rules (`ProcessUtils.GetOutputs`, `ImportedSymbol.CreateOutpu
 not an instruction to decorate every instance method. For an instance-state output,
 prefer HasStateOutput and a void Update over returning `this` just to expose it.
 
+
+## Static audit helper
+
+Run the [parser-based audit](process-node-audit.md) across the relevant source
+roots to inventory candidate fragments, output collisions and unresolved coverage.
+Review findings against the generated node; the scanner does not prove runtime behavior.

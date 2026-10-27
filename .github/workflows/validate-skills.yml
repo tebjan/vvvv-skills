@@ -93,3 +93,19 @@ jobs:
         run: uv sync --frozen --extra server --group test
       - name: Verify standalone editor and Python/MCP/CLI parity
         run: uv run --frozen --extra server pytest -q
+
+  process-node-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: skills/vvvv-custom-nodes/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned C# parser locally
+        run: python -m pip install --target .deps -r requirements.txt
+      - name: Verify ProcessNode syntax audit
+        run: python -m unittest -v test_audit_process_nodes.py
