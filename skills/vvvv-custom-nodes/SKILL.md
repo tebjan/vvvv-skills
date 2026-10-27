@@ -24,19 +24,16 @@ What `[ProcessNode]` does NOT do:
 
 - It does NOT make a class visible to vvvv. Visibility comes from the C# `public` access modifier plus an `[assembly: ImportAsIs/ImportNamespace/ImportType]` attribute. See vvvv-node-libraries for the import rules.
 - It does NOT hide internal helpers. If a helper is `public` and its namespace is imported, it's a node. To hide one: make it `internal` (removes it from VL entirely), or keep it public and tag it `[Smell(SymbolSmell.Internal)]` / `[Smell(SymbolSmell.Hidden)]` (stays usable as a pin type, just isn't browsable). See advanced.md → *Smell Attribute*.
-- It does NOT change pin generation. Pin generation is driven by the `Update()` method signature for `[ProcessNode]` classes, and by public method/property signatures for non-`[ProcessNode]` classes.
+- It does NOT change pin generation. Pin generation follows the selected fragment signatures for `[ProcessNode]` classes, including eligible public helpers under implicit selection; ordinary classes expose imported member operations.
 
 **When to use `[ProcessNode]`:** the class needs frame-by-frame updates, persistent state between frames, or `IDisposable` cleanup. **When to skip `[ProcessNode]`:** stateless utility classes, value types, static helper methods — leaving the attribute off avoids the per-frame `Update()` ceremony, and the public methods become operation nodes automatically.
 
 ## ProcessNode Pattern — The Core Pattern
 
-Before implementing a node, read a working sibling and reuse its public lifecycle
-and pin pattern. A normal stateful node should expose a compact Update interface;
-keep engine properties and setters in its implementation. Check the actual
-imported process and fragment list, not only the C# signature. A fragmented node
-factory deliberately exposes separate input setters/output getters; use it only
-when those independent operations are needed and accepted. Replacing it with one
-Update also changes when outputs are evaluated, so review scheduling side effects.
+Before implementing a node, reuse a working sibling's lifecycle and pin pattern.
+Inspect the imported process and fragment list. A deliberately fragmented factory
+is appropriate only for accepted independent operations; changing it to one Update
+changes evaluation timing and requires scheduling review.
 
 The canonical stateful C# node in vvvv gamma:
 
@@ -72,6 +69,18 @@ public class MyTransform : IDisposable
 ```
 
 **Prerequisite**: vvvv only sees a `[ProcessNode]` class (or any other public class) if its namespace is covered by an assembly-level import attribute — `[assembly: ImportAsIs]`, `[assembly: ImportNamespace]`, or `[assembly: ImportType]` for that specific class. Without one of those, the assembly's public API is invisible to the node browser entirely. Projects scaffolded by vvvv include `[assembly: ImportAsIs]` automatically. For multi-namespace libraries or hand-picked node lists, see vvvv-node-libraries — `ImportAsIs` is `AllowMultiple = false`, so you'll reach for `ImportNamespace` (multi-use) or `ImportType` (per-type) when one root attribute isn't enough.
+
+### One canonical Update and intentional state flow
+
+A normal ProcessNode has **one canonical Update**. Public `UpdateWithElements`,
+Update overloads and other helpers are imported fragments under implicit selection.
+Keep implementation helpers private/internal or explicitly exclude them. Ordinary
+instance operations already carry state flow; normally expose the process instance
+with HasStateOutput and a void Update. An intentional return this or a distinct
+result object remains valid. Deliberate multi-fragment nodes need designed pin
+ownership and scheduling. See [the full contract](process-node-contract.md).
+Verify imported fragments/pins and actual node placement/wiring; C# compilation
+alone does not prove that contract or saved-patch compatibility.
 
 ### Non-Negotiable Rules
 
@@ -148,7 +157,7 @@ public class ParticleSystem
 }
 ```
 
-Alternative: return `this` from a method to expose the instance.
+Use HasStateOutput for the process instance; see the canonical Update/state-flow rules above. An intentional method return is a separate result contract.
 
 ⚠️ **`HasStateOutput` also un-hides the class and all its public members as individual nodes.**
 `ImportedSymbol.GetSmell()` adds `SymbolSmell.Hidden` to the *type* whenever a
@@ -252,22 +261,8 @@ So `[ProcessNode]` (bare) is the right default for the common case where the cla
 
 #### Output names: instance state versus method result
 
-- `[ProcessNode(HasStateOutput = true)]` exposes the class instance as **Output**
-  automatically. Do not add a return attribute to name that state pin. If a
-  fragment already defines a non-state Output, the instance pin becomes State Output.
-- `HasStateOutput` defaults to false. An ordinary unannotated mutable-class `Update()` return
-  is a separate **Result**, even if its implementation returns `this`.
-- Static operation returns usually become **Result**. Without an explicit return
-  pin attribute, the importer can derive **Output** when the first input type
-  matches the return type. Inspect the generated surface before overriding it.
-- `out` parameters use their parameter names: `out T output` becomes Output.
-  For an authored node's main method result, use `[return: Pin(Name = "Output")]`
-  only when the generated name would otherwise differ. Secondary outputs keep
-  meaningful names such as Texture and Error. Preserve imported/stock names.
-
-These are importer rules (`ProcessUtils.GetOutputs`, `ImportedSymbol.CreateOutputs`),
-not an instruction to decorate every instance method. For an instance-state output,
-prefer HasStateOutput and a void Update over returning `this` just to expose it.
+See [output naming and state flow](process-node-contract.md#output-naming-rules)
+for HasStateOutput, ordinary Result returns, out parameters and explicit pin names.
 
 ### `[DefaultValue]` — parameter (from `System.ComponentModel`)
 
@@ -277,7 +272,10 @@ NOT a vvvv attribute. Set it only for value types where the literal **isn't** ex
 
 ### `[Fragment]` — member-level (`AllowMultiple = false`)
 
-Only relevant when `[ProcessNode(FragmentSelection = FragmentSelection.Explicit)]` is set on the class. With the default `Implicit` selection, `[Fragment]` is unnecessary noise.
+With `FragmentSelection.Explicit`, mark each intended fragment with `[Fragment]`.
+With default `Implicit` selection, eligible public instance members are included
+unless `[Fragment(IsHidden = true)]` excludes them. A bare `[Fragment]` is usually
+unnecessary there, but non-default visibility/order metadata remains meaningful.
 
 | Property | Default | Set it when… |
 |---|---|---|
