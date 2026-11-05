@@ -23,7 +23,7 @@ from .session import PatchSession
 # remain accepted too; discovery describes both rather than silently dropping args.
 METHODS = {
     name: name for name in (
-        "add_node", "add_pad", "add_annotation", "add_dependency", "add_pin",
+        "add_node", "add_pad", "add_annotation", "add_dependency", "remove_dependency", "add_pin",
         "add_process", "add_slot", "add_slot_read", "remove_slot", "add_input_placement",
         "add_matrix_repeat_builder", "connect", "disconnect", "remove", "move",
         "set_bounds", "set_placement_position", "set_node_reference",

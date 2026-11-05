@@ -89,6 +89,9 @@ types/catalog contracts. Namespaced type annotations and node references use a
 verified donor element ID or `{ "path": "donor.vl", "id": "..." }`, not invented XML.
 Failed batches restore the tree, graph indexes, aliases and undo history together.
 Undo/redo must be standalone batches. Saves remain revision/conflict checked.
+To retire a root dependency, use `{"op":"remove_dependency","location":"Exact.Location","kind":"NodeFactoryDependency"}`.
+The selector matches the full `Location` and optional element kind. It returns
+`false` when absent and rejects multiple matches without changing the document.
 
 The operation registry is the adapter source of truth; `test_surface_parity.py`
 checks public mutations/signatures, actual MCP protocol calls, CLI, scoped views

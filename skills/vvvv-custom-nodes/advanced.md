@@ -26,7 +26,12 @@ public sealed class RenderWindow : IDisposable
 }
 ```
 
-Only methods marked `[Fragment]` are exposed. Without `FragmentSelection.Explicit`, all public methods become node operations.
+Only eligible members marked `[Fragment]` are selected with Explicit mode. Under
+Implicit mode, eligible public instance members are selected unless marked
+`[Fragment(IsHidden = true)]`. Include constructors and intended lifecycle members
+when switching to Explicit. Multiple fragments require deliberate pin ownership
+and scheduling; do not use them accidentally for alternate Update helpers. See
+[the normal node contract](process-node-contract.md).
 
 ## Smell Attribute — aspects from C#
 
@@ -147,6 +152,9 @@ Parameter names are auto-split from camelCase into vvvv pin names:
 - `customInstanceId` → pin "Custom Instance Id"
 
 This matters for `SetPinValue()` calls — the name must match exactly.
+
+For runtime changes written back to typed Create-pin values in the document,
+see [document-persistence.md](document-persistence.md).
 
 ## Node Browser Categories via ImportType
 

@@ -77,6 +77,30 @@ Direct children: `NugetDependency`, `DocumentDependency`, `PlatformDependency`, 
 <PlatformDependency Id="..." Location="VL.Core.dll" />
 ```
 
+### NodeFactoryDependency
+
+For nodes supplied by a registered `IVLNodeDescription` factory, the package
+document forwards the factory's exact registration identifier. Example names:
+
+```xml
+<NodeFactoryDependency Id="..." Location="Example.TextureOutputs" IsForward="true" />
+```
+
+The corresponding saved call uses `NodeFlag` followed by `ProcessNode`; its
+`LastDependency` is that same factory identifier, not the package `.vl` file:
+
+```xml
+<p:NodeReference LastCategoryFullName="Example.Resources"
+                 LastDependency="Example.TextureOutputs">
+  <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+  <Choice Kind="ProcessNode" Name="ToTexture" />
+</p:NodeReference>
+```
+
+Copy the identifier from `RegisterNodeFactory` and verify the call's saved
+reference. The node catalog's display category and CLR type name do not supply
+the factory identifier.
+
 ### Common Dependency Attributes
 
 | Attribute | Default | Description |

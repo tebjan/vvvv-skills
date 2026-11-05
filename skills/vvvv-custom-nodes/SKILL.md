@@ -1,9 +1,9 @@
 ---
 name: vvvv-custom-nodes
-description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] lifecycle pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, the public-API import model, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, creating stateless utility methods, or deciding whether a class needs [ProcessNode] at all. Requires the assembly to have one of [assembly: ImportAsIs] / [assembly: ImportNamespace] / [assembly: ImportType] set (see vvvv-node-libraries)."
+description: "Helps write C# node classes for vvvv gamma — the [ProcessNode] lifecycle pattern, Update() method, out parameters, pin configuration, change detection, stateless operation nodes, the public-API import model, and service consumption via NodeContext (IFrameClock, Game access, logging). Use when writing a node class, adding pins, implementing change detection, accessing services in node constructors, persisting runtime state through Create pins, creating stateless utility methods, or deciding whether a class needs [ProcessNode] at all. Requires the assembly to have one of [assembly: ImportAsIs] / [assembly: ImportNamespace] / [assembly: ImportType] set (see vvvv-node-libraries)."
 license: CC-BY-SA-4.0
-compatibility: Designed for coding AI agents assisting with vvvv gamma development
 metadata:
+  compatibility: Designed for coding AI agents assisting with vvvv gamma development
   author: Tebjan Halm
   version: "1.3"
 ---
@@ -24,11 +24,16 @@ What `[ProcessNode]` does NOT do:
 
 - It does NOT make a class visible to vvvv. Visibility comes from the C# `public` access modifier plus an `[assembly: ImportAsIs/ImportNamespace/ImportType]` attribute. See vvvv-node-libraries for the import rules.
 - It does NOT hide internal helpers. If a helper is `public` and its namespace is imported, it's a node. To hide one: make it `internal` (removes it from VL entirely), or keep it public and tag it `[Smell(SymbolSmell.Internal)]` / `[Smell(SymbolSmell.Hidden)]` (stays usable as a pin type, just isn't browsable). See advanced.md → *Smell Attribute*.
-- It does NOT change pin generation. Pin generation is driven by the `Update()` method signature for `[ProcessNode]` classes, and by public method/property signatures for non-`[ProcessNode]` classes.
+- It does NOT change pin generation. Pin generation follows the selected fragment signatures for `[ProcessNode]` classes, including eligible public helpers under implicit selection; ordinary classes expose imported member operations.
 
 **When to use `[ProcessNode]`:** the class needs frame-by-frame updates, persistent state between frames, or `IDisposable` cleanup. **When to skip `[ProcessNode]`:** stateless utility classes, value types, static helper methods — leaving the attribute off avoids the per-frame `Update()` ceremony, and the public methods become operation nodes automatically.
 
 ## ProcessNode Pattern — The Core Pattern
+
+Before implementing a node, reuse a working sibling's lifecycle and pin pattern.
+Inspect the imported process and fragment list. A deliberately fragmented factory
+is appropriate only for accepted independent operations; changing it to one Update
+changes evaluation timing and requires scheduling review.
 
 The canonical stateful C# node in vvvv gamma:
 
@@ -43,7 +48,7 @@ public class MyTransform : IDisposable
     /// Transforms input values with caching.
     /// </summary>
     public void Update(
-        out float result,       // OUT parameters FIRST
+        out float output,       // OUT parameters FIRST
         out string error,       // More out params
         float input = 0f,       // Value inputs with defaults AFTER
         bool reset = false)
@@ -56,7 +61,7 @@ public class MyTransform : IDisposable
             _lastInput = input;
         }
 
-        result = _cachedResult; // ALWAYS output cached data
+        output = _cachedResult; // ALWAYS output cached data
     }
 
     public void Dispose() { /* cleanup */ }
@@ -64,6 +69,18 @@ public class MyTransform : IDisposable
 ```
 
 **Prerequisite**: vvvv only sees a `[ProcessNode]` class (or any other public class) if its namespace is covered by an assembly-level import attribute — `[assembly: ImportAsIs]`, `[assembly: ImportNamespace]`, or `[assembly: ImportType]` for that specific class. Without one of those, the assembly's public API is invisible to the node browser entirely. Projects scaffolded by vvvv include `[assembly: ImportAsIs]` automatically. For multi-namespace libraries or hand-picked node lists, see vvvv-node-libraries — `ImportAsIs` is `AllowMultiple = false`, so you'll reach for `ImportNamespace` (multi-use) or `ImportType` (per-type) when one root attribute isn't enough.
+
+### One canonical Update and intentional state flow
+
+A normal ProcessNode has **one canonical Update**. Public `UpdateWithElements`,
+Update overloads and other helpers are imported fragments under implicit selection.
+Keep implementation helpers private/internal or explicitly exclude them. Ordinary
+instance operations already carry state flow; normally expose the process instance
+with HasStateOutput and a void Update. An intentional return this or a distinct
+result object remains valid. Deliberate multi-fragment nodes need designed pin
+ownership and scheduling. See [the full contract](process-node-contract.md).
+Verify imported fragments/pins and actual node placement/wiring; C# compilation
+alone does not prove that contract or saved-patch compatibility.
 
 ### Non-Negotiable Rules
 
@@ -92,6 +109,16 @@ Implications for node authors:
 - **Dispose must be thorough** — native handles, network connections, and GPU resources must be released. Leaks accumulate across reloads during development.
 - **Constructor must be fast** — it runs each time you save. Defer heavy initialization to the first `Update()` call using a `_needsInit` flag.
 - The rules about caching and change detection above exist partly because of this: your code runs in a program that never stops. Allocations in `Update()` cause GC pressure in a 60 FPS loop that may run for hours.
+
+### State that belongs to the document
+
+A Create pin is the standard boundary for persistent initial state. Restore its
+value in the constructor; when relevant runtime state changes, apply the change
+live and write the updated value back to that pin through the document model.
+This covers window bounds, interaction results, calibration and editable models,
+regardless of which subsystem caused the change. Keep supported VL value types;
+serialization to a String is optional. See [document-persistence.md](document-persistence.md)
+for ownership, typed writeback, update modes and Save/reopen behavior.
 
 ### Class Naming vs Node Name
 
@@ -130,7 +157,7 @@ public class ParticleSystem
 }
 ```
 
-Alternative: return `this` from a method to expose the instance.
+Use HasStateOutput for the process instance; see the canonical Update/state-flow rules above. An intentional method return is a separate result contract.
 
 ⚠️ **`HasStateOutput` also un-hides the class and all its public members as individual nodes.**
 `ImportedSymbol.GetSmell()` adds `SymbolSmell.Hidden` to the *type* whenever a
@@ -183,6 +210,8 @@ public void Update(
 
 ### DefaultValue for Complex Types
 
+Check the resolved pin defaults, not just declarations: nonliteral attributes must convert to the intended typed value, and authored factories must give matching values to both pin descriptions and runtime input storage. Shared pins on sibling nodes should share defaults from one definition. Treat zero/empty colors, vectors and matrices as intentional only when their meaning is defined; preserve deliberate sentinel values and explicit patch overrides.
+
 For defaults that cannot be C# literal expressions:
 
 ```csharp
@@ -230,7 +259,10 @@ So `[ProcessNode]` (bare) is the right default for the common case where the cla
 | `PinGroupDefaultCount` | `0` | …a pin group should start with N entries. |
 | `PinGroupEditMode` | `None` | …you want to limit add/remove to one direction only. |
 
-**The return value attribute** (`[return: Pin(...)]`) is only needed when the auto-derived return-value pin needs an override — e.g. a custom name. The default name is fine for nearly all `Update` methods that only have `out` parameters.
+#### Output names: instance state versus method result
+
+See [output naming and state flow](process-node-contract.md#output-naming-rules)
+for HasStateOutput, ordinary Result returns, out parameters and explicit pin names.
 
 ### `[DefaultValue]` — parameter (from `System.ComponentModel`)
 
@@ -240,7 +272,10 @@ NOT a vvvv attribute. Set it only for value types where the literal **isn't** ex
 
 ### `[Fragment]` — member-level (`AllowMultiple = false`)
 
-Only relevant when `[ProcessNode(FragmentSelection = FragmentSelection.Explicit)]` is set on the class. With the default `Implicit` selection, `[Fragment]` is unnecessary noise.
+With `FragmentSelection.Explicit`, mark each intended fragment with `[Fragment]`.
+With default `Implicit` selection, eligible public instance members are included
+unless `[Fragment(IsHidden = true)]` excludes them. A bare `[Fragment]` is usually
+unnecessary there, but non-default visibility/order metadata remains meaningful.
 
 | Property | Default | Set it when… |
 |---|---|---|
@@ -359,6 +394,7 @@ public class NoiseSteering
 {
     private SteeringConfig? _cached;
 
+    [return: Pin(Name = "Output")]
     public ISteering Update(
         float strength = 2.0f,
         float noiseFrequency = 0.05f,
@@ -376,6 +412,7 @@ public class NoiseSteering
 
 Mix return + `out` when you have one primary output plus additional outputs:
 ```csharp
+[return: Pin(Name = "Output")]
 public ReadOnlySpan<ParticleState> Update(
     SimulationConfig config,
     float deltaTime,
@@ -438,6 +475,7 @@ public static class MathOps
 
 For custom regions (delegate-based, ICustomRegion, IRegion\<TInlay\>), see [regions.md](regions.md).
 For advanced patterns (FragmentSelection, Smell, Dynamic Enums, Settings/Split, Pin Name Derivation), see [advanced.md](advanced.md).
+For runtime state persisted through typed Create-pin values in the owning document, see [document-persistence.md](document-persistence.md).
 For service consumption (IFrameClock, Game, Logging), see [services.md](services.md).
 For working with public channels from C# nodes, see vvvv-channels.
 For code examples, see [examples.md](examples.md).

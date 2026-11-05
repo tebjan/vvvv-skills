@@ -12,6 +12,29 @@ metadata:
 
 ## C# / ProcessNode Issues
 
+### Sequence contains no elements when placing a ProcessNode
+
+If the stack names `PatchCompiler.GenerateObjectCreationOrMethodInvocationStatements`,
+inspect the imported process/fragment outputs before investigating shader dispatch.
+The exception alone does not establish the cause for every affected node.
+
+- Under default implicit selection, public instance helpers such as
+  `UpdateWithElements` become additional fragments. Audit properties and inherited
+  imported members too, not just methods named exactly Update.
+- Two unannotated mutable-class methods returning this normally create competing
+  Result outputs. Process output deduplication can leave a fragment return without
+  its corresponding generated pin. Check actual fragment/output ownership.
+- For a normal ProcessNode, keep one canonical Update; use HasStateOutput with a
+  void Update when the output is the instance. Ordinary instance operations already
+  carry state flow. Keep valid method results and intentional multi-fragment APIs.
+- Exclude implementation helpers deliberately. Preserve alternate capabilities
+  through the agreed node design. Merely renaming Result or hiding a pin does not
+  fix two competing update paths.
+- Verify actual node placement and wiring in the target vvvv, including saved-patch
+  pin-kind compatibility. A passing C# build is insufficient.
+
+See [the authoring contract and public reproduction](../vvvv-custom-nodes/process-node-contract.md).
+
 ### "Node" Suffix in Class Name
 
 **Symptom**: Node works but has ugly name in vvvv.
